@@ -1,0 +1,141 @@
+/* ============================================================
+   Kayle's Steps Recorder — Design Tokens (CSS Custom Properties)
+   Drop this into your renderer / stylesheet root.
+   ============================================================ */
+
+:root {
+  /* ── Surfaces (deep → shallow) ─────────────────────── */
+  --ksr-bg:        #06080c;   /* app background, deepest */
+  --ksr-surf-0:    #0a0d14;   /* titlebar, sidebars */
+  --ksr-surf-1:    #10141d;   /* cards, inputs */
+  --ksr-surf-2:    #161b27;   /* raised pills, kbd */
+  --ksr-surf-3:    #1d2333;   /* hover state */
+  --ksr-surf-4:    #262d40;   /* scrollbar thumb */
+
+  /* ── Borders / dividers ────────────────────────────── */
+  --ksr-border-0:  #1b2030;   /* hairline default */
+  --ksr-border-1:  #262d40;   /* input/card borders */
+  --ksr-border-2:  #363f57;   /* hover / focus borders */
+
+  /* ── Text ──────────────────────────────────────────── */
+  --ksr-text-0:    #f0f4fa;   /* headings, titles */
+  --ksr-text-1:    #c8d0dd;   /* body */
+  --ksr-text-2:    #8390a5;   /* secondary */
+  --ksr-text-3:    #525c70;   /* muted, meta labels */
+  --ksr-text-4:    #363f57;   /* disabled */
+  --ksr-text-inverse: #06080c;/* on accent fills */
+
+  /* ── Accent (cyan) — themeable ─────────────────────── */
+  --ksr-acc:        #00c4ff;
+  --ksr-acc-hover:  #33d2ff;
+  --ksr-acc-soft:   rgba(0,196,255,0.12);
+  --ksr-acc-border: rgba(0,196,255,0.28);
+  --ksr-acc-glow:   0 0 32px rgba(0,196,255,0.28);
+
+  /* ── Semantic ──────────────────────────────────────── */
+  --ksr-imp:        #f59e0b;  /* important (amber) */
+  --ksr-imp-bg:     rgba(245,158,11,0.12);
+  --ksr-imp-text:   #fbbf24;
+  --ksr-imp-border: rgba(245,158,11,0.30);
+
+  --ksr-bug:        #ef4444;  /* bug (red) */
+  --ksr-bug-bg:     rgba(239,68,68,0.12);
+  --ksr-bug-text:   #f87171;
+  --ksr-bug-border: rgba(239,68,68,0.30);
+
+  --ksr-ok:         #10b981;  /* expected / saved (green) */
+  --ksr-ok-bg:      rgba(16,185,129,0.10);
+  --ksr-ok-text:    #34d399;
+  --ksr-ok-border:  rgba(16,185,129,0.28);
+
+  /* ── Typography ────────────────────────────────────── */
+  --ksr-font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont,
+                   'Segoe UI', Roboto, sans-serif;
+  --ksr-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale (px) */
+  --ksr-text-2xs:   9px;   /* uppercase eyebrow / meta */
+  --ksr-text-xs:    10px;
+  --ksr-text-sm:    11px;
+  --ksr-text-md:    12px;   /* body small */
+  --ksr-text-base:  13px;   /* body */
+  --ksr-text-lg:    14px;
+  --ksr-text-xl:    17px;   /* H3 / section title */
+  --ksr-text-2xl:   20px;   /* H2 */
+  --ksr-text-3xl:   30px;   /* H1 / hero */
+  --ksr-text-4xl:   38px;   /* Welcome hero */
+
+  /* Tracking */
+  --ksr-track-tight:  -0.025em;  /* titles */
+  --ksr-track-snug:   -0.01em;
+  --ksr-track-wide:    0.08em;   /* labels */
+  --ksr-track-wider:   0.14em;   /* uppercase eyebrows */
+
+  /* Weight */
+  --ksr-weight-medium:    500;
+  --ksr-weight-semibold:  600;
+  --ksr-weight-bold:      700;
+  --ksr-weight-extra:     800;
+
+  /* ── Radius ────────────────────────────────────────── */
+  --ksr-r-xs:  4px;
+  --ksr-r-sm:  6px;
+  --ksr-r-md:  8px;
+  --ksr-r-lg:  10px;
+  --ksr-r-xl:  12px;
+  --ksr-r-2xl: 14px;
+  --ksr-r-full: 9999px;
+
+  /* ── Spacing (px) ──────────────────────────────────── */
+  --ksr-s-1: 4px;
+  --ksr-s-2: 6px;
+  --ksr-s-3: 8px;
+  --ksr-s-4: 10px;
+  --ksr-s-5: 12px;
+  --ksr-s-6: 14px;
+  --ksr-s-7: 16px;
+  --ksr-s-8: 18px;
+  --ksr-s-9: 22px;
+  --ksr-s-10: 28px;
+  --ksr-s-11: 32px;
+  --ksr-s-12: 48px;
+
+  /* ── Shadows ───────────────────────────────────────── */
+  --ksr-shadow-card:    0 1px 3px rgba(0,0,0,0.4),
+                        0 0 0 1px rgba(255,255,255,0.04);
+  --ksr-shadow-raised:  0 6px 18px rgba(0,0,0,0.4);
+  --ksr-shadow-floating:0 20px 60px rgba(0,0,0,0.55),
+                        0 0 0 1px rgba(255,255,255,0.05);
+  --ksr-shadow-image:   0 4px 12px rgba(0,0,0,0.35);
+
+  /* ── Layout sizes ──────────────────────────────────── */
+  --ksr-titlebar-h:  38px;
+  --ksr-rail-w:      56px;
+  --ksr-tabs-h:      44px;
+  --ksr-timeline-h:  116px;
+  --ksr-toolrail-w:  48px;
+  --ksr-inspector-w: 340px;
+  --ksr-statusbar-h: 26px;
+
+  --ksr-step-thumb-w: 140px;
+  --ksr-step-thumb-h: 92px;
+}
+
+/* ── Light mode opt-in (mirror of dark, suggested values) ── */
+:root[data-theme="light"] {
+  --ksr-bg:       #f5f7fa;
+  --ksr-surf-0:   #ffffff;
+  --ksr-surf-1:   #f8fafc;
+  --ksr-surf-2:   #f1f5f9;
+  --ksr-surf-3:   #e2e8f0;
+  --ksr-surf-4:   #cbd5e1;
+  --ksr-border-0: #e2e8f0;
+  --ksr-border-1: #cbd5e1;
+  --ksr-border-2: #94a3b8;
+  --ksr-text-0:   #0f172a;
+  --ksr-text-1:   #1e293b;
+  --ksr-text-2:   #475569;
+  --ksr-text-3:   #64748b;
+  --ksr-text-4:   #94a3b8;
+  --ksr-text-inverse: #ffffff;
+}

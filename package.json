@@ -1,0 +1,98 @@
+{
+  "name": "stepforge",
+  "version": "1.0.0",
+  "description": "Kayle's Steps Recorder — modern QA-documentation tool for Windows",
+  "main": "out/main/index.js",
+  "author": {
+    "name": "Kayle Schmoyer",
+    "email": "schmoyer21@gmail.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "dist": "electron-vite build && electron-builder --win nsis --x64",
+    "verify:release": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/verify-release.ps1",
+    "verify:updater": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/verify-updater.ps1",
+    "release": "electron-vite build && electron-builder --win nsis --x64 --publish always",
+    "start": "electron-vite preview"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.1.1",
+    "@fontsource/space-grotesk": "^5.1.1",
+    "docx": "^9.6.1",
+    "electron-updater": "^6.8.3",
+    "lucide-react": "^0.469.0",
+    "sharp": "^0.34.5",
+    "uiohook-napi": "^1.5.5",
+    "write-file-atomic": "^7.0.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.4",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.3",
+    "vite": "^5.4.11"
+  },
+  "build": {
+    "appId": "com.kayleschmoyer.stepforge",
+    "productName": "StepForge",
+    "artifactName": "${productName}-Setup-${version}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "files": [
+      "out/**/*",
+      "resources/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "resources/icons/app.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "shortcutName": "StepForge"
+    },
+    "extraResources": [
+      {
+        "from": "resources/scripts",
+        "to": "scripts"
+      },
+      {
+        "from": "resources/templates",
+        "to": "templates"
+      },
+      {
+        "from": "resources/icons",
+        "to": "icons"
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "kayleschmoyer",
+      "repo": "StepForge",
+      "releaseType": "release"
+    }
+  }
+}

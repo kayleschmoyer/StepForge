@@ -1,0 +1,3 @@
+/* Font weights are imported via JS in main.tsx / hud.tsx so Vite resolves
+   them through node_modules. This file is reserved for any explicit @font-face
+   overrides we might add later. */
