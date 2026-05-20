@@ -156,6 +156,16 @@ export function registerIpc(context: IpcContext): void {
   );
   ipcMain.handle(IPC.AppOpenPath, async (_, path: string) => shell.openPath(path));
   ipcMain.on(IPC.AppShowItemInFolder, (_, path: string) => shell.showItemInFolder(path));
+  ipcMain.handle(IPC.AppOpenExternal, async (_, url: string) => {
+    await shell.openExternal(url);
+  });
+  ipcMain.handle(IPC.AppInfo, async () => ({
+    name: app.getName(),
+    version: app.getVersion(),
+    platform: process.platform,
+    arch: process.arch,
+    releaseNotesUrl: 'https://github.com/kayleschmoyer/StepForge/releases/latest'
+  }));
 
   // ── Diagnostics ────────────────────────────────────────
   ipcMain.handle(IPC.DiagnosticsList, async (): Promise<DiagnosticEntry[]> => diagnostics.list());

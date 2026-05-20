@@ -10,6 +10,7 @@ import {
 import type { ComponentType, ReactNode } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import { defaultAppSettings, type AppSettings } from '@shared/models/AppSettings';
+import type { AppInfo } from '@shared/models/Ipc';
 import { BrandMark } from '../ui/BrandMark';
 
 const ACCENT = '#00c4ff';
@@ -531,6 +532,32 @@ function DefaultsSection({
 }
 
 function AboutSection() {
+  const updateStatus = useProjectStore((s) => s.updateStatus);
+  const setUpdateStatus = useProjectStore((s) => s.setUpdateStatus);
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
+
+  useEffect(() => {
+    void window.stepForge.app.info().then(setAppInfo);
+    const off = window.stepForge.update.onStatus(setUpdateStatus);
+    return () => off();
+  }, [setUpdateStatus]);
+
+  const updateLabel = updateStatus.status === 'checking'
+    ? 'Checking...'
+    : updateStatus.status === 'available'
+      ? `Update available v${updateStatus.version}`
+      : updateStatus.status === 'downloading'
+        ? `Downloading ${Math.round(updateStatus.percent)}%`
+        : updateStatus.status === 'downloaded'
+          ? `Ready to install v${updateStatus.version}`
+          : updateStatus.status === 'installing'
+            ? 'Installing update...'
+            : updateStatus.status === 'not-available'
+              ? 'Up to date'
+              : updateStatus.status === 'error'
+                ? 'Update failed'
+                : 'Check for updates';
+
   return (
     <>
       <SectionHead title="About" sub="Version, system info, and credits." />
@@ -556,10 +583,10 @@ function AboutSection() {
               letterSpacing: '-0.02em'
             }}
           >
-            Kayle&apos;s Steps Recorder <span style={{ color: ACCENT }}>1.0.0</span>
+            StepForge <span style={{ color: ACCENT }}>{appInfo?.version ?? ''}</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--ksr-text-2)', marginTop: 4 }}>
-            Built on Electron · win32-x64 · NSIS installer
+            Built on Electron · {appInfo ? `${appInfo.platform}-${appInfo.arch}` : 'Windows'} · NSIS installer
           </div>
           <div style={{ fontSize: 12, color: 'var(--ksr-text-3)', marginTop: 4 }}>
             © Kayle Schmoyer — All rights reserved.
@@ -582,9 +609,10 @@ function AboutSection() {
               fontWeight: 600
             }}
           >
-            <Search size={12} /> Check for updates
+            <Search size={12} /> {updateLabel}
           </button>
           <button
+            onClick={() => appInfo && void window.stepForge.app.openExternal(appInfo.releaseNotesUrl)}
             style={{
               padding: '5px 10px',
               borderRadius: 6,

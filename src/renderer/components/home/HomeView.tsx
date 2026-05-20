@@ -7,6 +7,7 @@ import {
   History
 } from 'lucide-react';
 import { useProjectStore } from '@renderer/state/projectStore';
+import type { AppInfo } from '@shared/models/Ipc';
 import type { RecentProject } from '@shared/models/Project';
 import { timeOfDayGreeting, formatTimestampLong } from '@shared/util/time';
 import { startRecordingWithDetails } from '@renderer/services/startRecordingWithDetails';
@@ -597,6 +598,12 @@ function PillButton({
 }
 
 function FooterHints() {
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
+
+  useEffect(() => {
+    void window.stepForge.app.info().then(setAppInfo);
+  }, []);
+
   return (
     <div
       style={{
@@ -610,7 +617,7 @@ function FooterHints() {
         color: 'var(--ksr-text-3)'
       }}
     >
-      <span>v1.0.0 · build dev</span>
+      <span>{appInfo ? `v${appInfo.version} · ${appInfo.platform}-${appInfo.arch}` : 'StepForge'}</span>
     </div>
   );
 }

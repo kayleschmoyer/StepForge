@@ -32,8 +32,10 @@ export function AnnotationLayer({ step, viewWidth, viewHeight, nativeWidth, nati
   const tool = useProjectStore((s) => s.activeTool);
   const setAnnotations = useProjectStore((s) => s.setStepAnnotations);
   const [draft, setDraft] = useState<Annotation | null>(null);
+  const [textEditor, setTextEditor] = useState<{ x: number; y: number; value: string } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const textInputRef = useRef<HTMLInputElement | null>(null);
   const startRef = useRef<[number, number] | null>(null);
   const dragRef = useRef<{ id: string; start: [number, number]; original: Annotation } | null>(null);
 
@@ -51,6 +53,10 @@ export function AnnotationLayer({ step, viewWidth, viewHeight, nativeWidth, nati
   );
 
   useEffect(() => {
+    if (textEditor) textInputRef.current?.focus();
+  }, [textEditor]);
+
+  useEffect(() => {
     if (!selectedId) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -64,6 +70,17 @@ export function AnnotationLayer({ step, viewWidth, viewHeight, nativeWidth, nati
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [persist, selectedId, step.annotations]);
+
+  const commitTextEditor = useCallback(() => {
+    if (!textEditor) return;
+    const text = textEditor.value.trim();
+    if (text) {
+      const annotation: Annotation = { id: newId(), kind: 'text', at: [textEditor.x, textEditor.y], text, color: DEFAULT_COLOR, fontSize: DEFAULT_FONT };
+      persist([...step.annotations, annotation]);
+      setSelectedId(annotation.id);
+    }
+    setTextEditor(null);
+  }, [persist, step.annotations, textEditor]);
 
   const handlePointerDown = (event: RPointerEvent<SVGSVGElement>) => {
     if (!svgRef.current) return;
@@ -94,9 +111,7 @@ export function AnnotationLayer({ step, viewWidth, viewHeight, nativeWidth, nati
         annotation = { id: newId(), kind: 'circle', bounds: [x, y, 1, 1], color: DEFAULT_COLOR, strokeWidth: DEFAULT_STROKE };
         break;
       case 'text': {
-        const text = prompt('Annotation text:', '');
-        if (!text) return;
-        persist([...step.annotations, { id: newId(), kind: 'text', at: [x, y], text, color: DEFAULT_COLOR, fontSize: DEFAULT_FONT }]);
+        setTextEditor({ x, y, value: '' });
         startRef.current = null;
         return;
       }
@@ -189,6 +204,36 @@ export function AnnotationLayer({ step, viewWidth, viewHeight, nativeWidth, nati
         <AnnotationShape key={annotation.id} annotation={annotation} selected={annotation.id === selectedId} />
       ))}
       {draft && <AnnotationShape annotation={draft} selected />}
+      {textEditor && (
+        <foreignObject x={textEditor.x} y={textEditor.y - DEFAULT_FONT} width={320} height={44}>
+          <input
+            ref={textInputRef}
+            value={textEditor.value}
+            placeholder="Text"
+            onChange={(event) => setTextEditor({ ...textEditor, value: event.currentTarget.value })}
+            onBlur={commitTextEditor}
+            onKeyDown={(event) => {
+              event.stopPropagation();
+              if (event.key === 'Enter') commitTextEditor();
+              if (event.key === 'Escape') setTextEditor(null);
+            }}
+            style={{
+              width: 300,
+              height: 32,
+              boxSizing: 'border-box',
+              border: '2px solid #00c4ff',
+              borderRadius: 6,
+              background: 'rgba(6, 8, 12, 0.92)',
+              color: '#e6f7ff',
+              fontFamily: 'Space Grotesk, sans-serif',
+              fontSize: DEFAULT_FONT,
+              fontWeight: 700,
+              outline: 'none',
+              padding: '2px 8px'
+            }}
+          />
+        </foreignObject>
+      )}
     </svg>
   );
 }

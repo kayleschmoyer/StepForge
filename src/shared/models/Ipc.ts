@@ -52,6 +52,8 @@ export const IPC = {
   AppOpenSaveDialog: 'app:openSaveDialog',
   AppOpenPath: 'app:openPath',
   AppShowItemInFolder: 'app:showItemInFolder',
+  AppOpenExternal: 'app:openExternal',
+  AppInfo: 'app:info',
 
   // Diagnostics
   DiagnosticsList: 'diagnostics:list',
@@ -146,6 +148,14 @@ export type UpdateStatus =
   | { status: 'downloaded'; version: string }
   | { status: 'installing' }
   | { status: 'error'; message: string };
+
+export interface AppInfo {
+  name: string;
+  version: string;
+  platform: string;
+  arch: string;
+  releaseNotesUrl: string;
+}
 
 export interface StepUpdatePayload {
   id: string;
@@ -244,6 +254,8 @@ export interface StepForgeBridge {
   app: {
     openPath: (path: string) => Promise<string>;
     showItemInFolder: (path: string) => void;
+    openExternal: (url: string) => Promise<void>;
+    info: () => Promise<AppInfo>;
   };
   diagnostics: {
     list: () => Promise<DiagnosticEntry[]>;

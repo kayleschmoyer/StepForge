@@ -1,12 +1,17 @@
+import { useEffect, useState } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import { formatClock, formatElapsed } from '@shared/util/time';
-
-const VERSION = 'v1.0.0 · win-x64';
+import type { AppInfo } from '@shared/models/Ipc';
 
 export function StatusBar() {
   const project = useProjectStore((s) => s.project);
   const recState = useProjectStore((s) => s.recState);
   const setDiagnosticsOpen = useProjectStore((s) => s.setDiagnosticsOpen);
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
+
+  useEffect(() => {
+    void window.stepForge.app.info().then(setAppInfo);
+  }, []);
 
   const saved = !project?.isDirty;
   const stepCount = project?.steps.length ?? 0;
@@ -86,7 +91,9 @@ export function StatusBar() {
         >
           Diagnostics
         </button>
-        <span style={{ fontFamily: 'var(--ksr-font-mono)' }}>{VERSION}</span>
+        <span style={{ fontFamily: 'var(--ksr-font-mono)' }}>
+          {appInfo ? `v${appInfo.version} · ${appInfo.platform}-${appInfo.arch}` : 'StepForge'}
+        </span>
       </div>
     </div>
   );

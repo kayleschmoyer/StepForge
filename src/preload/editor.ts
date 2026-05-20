@@ -58,7 +58,9 @@ const api: StepForgeBridge = {
   },
   app: {
     openPath: (path) => ipcRenderer.invoke(IPC.AppOpenPath, path),
-    showItemInFolder: (path) => ipcRenderer.send(IPC.AppShowItemInFolder, path)
+    showItemInFolder: (path) => ipcRenderer.send(IPC.AppShowItemInFolder, path),
+    openExternal: (url) => ipcRenderer.invoke(IPC.AppOpenExternal, url),
+    info: () => ipcRenderer.invoke(IPC.AppInfo)
   },
   diagnostics: {
     list: () => ipcRenderer.invoke(IPC.DiagnosticsList),
