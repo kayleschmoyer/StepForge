@@ -103,6 +103,20 @@ function Test-CapturableTopLevelWindow([IntPtr]$Hwnd, [int]$PointX, [int]$PointY
 }
 
 function Find-TopWindowAtPoint([int]$PointX, [int]$PointY) {
+  $point = New-Object Win32WindowProbe+POINT
+  $point.X = $PointX
+  $point.Y = $PointY
+  $direct = [Win32WindowProbe]::WindowFromPoint($point)
+  if ($direct -ne [IntPtr]::Zero) {
+    $root = [Win32WindowProbe]::GetAncestor($direct, 2)
+    if ($root -ne [IntPtr]::Zero -and (Test-CapturableTopLevelWindow $root $PointX $PointY)) {
+      return $root
+    }
+    if (Test-CapturableTopLevelWindow $direct $PointX $PointY) {
+      return $direct
+    }
+  }
+
   $script:foundHandle = [IntPtr]::Zero
   $callback = [Win32WindowProbe+EnumWindowsProc]{
     param([IntPtr]$Hwnd, [IntPtr]$LParam)

@@ -7,7 +7,8 @@ export class SettingsStore {
   async load(): Promise<AppSettings> {
     try {
       const raw = await readFile(this.path(), 'utf-8');
-      return { ...defaultAppSettings, ...JSON.parse(raw) };
+      const settings = { ...defaultAppSettings, ...JSON.parse(raw) };
+      return { ...settings, captureDelayMs: Math.min(settings.captureDelayMs, defaultAppSettings.captureDelayMs) };
     } catch {
       return { ...defaultAppSettings };
     }

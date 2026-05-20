@@ -19,9 +19,11 @@ export class StepProcessor {
   ) {}
 
   async process(project: Project, event: InputEvent, settings: AppSettings): Promise<RecordedStep | null> {
+    const startedAt = Date.now();
     const windowInfo = event.kind === 'mouse' || event.kind === 'wheel'
       ? await this.windowTracker.getWindowAtPoint(event.x, event.y)
       : await this.windowTracker.getForegroundWindow();
+    const windowLookupMs = Date.now() - startedAt;
     if ((event.kind === 'mouse' || event.kind === 'wheel') && !windowInfo) {
       diagnostics.record('info', 'recording', 'Skipped input because no capturable window was found.');
       return null;
@@ -35,11 +37,18 @@ export class StepProcessor {
       settings.windowOnlyCapture ? windowInfo?.handle : undefined,
       settings.windowOnlyCapture ? windowInfo?.bounds : undefined
     );
+    const captureMs = Date.now() - startedAt - windowLookupMs - settings.captureDelayMs;
     const stepId = `step-${randomUUID()}`;
     const screenshot = capture.png;
-    const thumbnail = await this.imageOps.thumbnail(screenshot);
-    const screenshotPath = await this.imageStorage.saveScreenshot(project, stepId, screenshot);
+    const thumbnailPromise = this.imageOps.thumbnail(screenshot);
+    const screenshotPathPromise = this.imageStorage.saveScreenshot(project, stepId, screenshot);
+    const thumbnail = await thumbnailPromise;
+    const screenshotPath = await screenshotPathPromise;
     const thumbnailPath = await this.imageStorage.saveThumbnail(project, stepId, thumbnail);
+    const totalMs = Date.now() - startedAt;
+    if (totalMs > 1200) {
+      diagnostics.record('warning', 'recording', `Step capture took ${totalMs} ms.`, `window=${windowLookupMs} ms, capture=${Math.max(0, captureMs)} ms`);
+    }
 
     return {
       id: stepId,

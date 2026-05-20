@@ -20,6 +20,14 @@ export type CaptureBounds = NonNullable<CaptureResult['bounds']>;
 
 export class CaptureService {
   async captureWindow(handle?: string, fallbackBounds?: CaptureBounds): Promise<CaptureResult> {
+    if (fallbackBounds) {
+      try {
+        return await this.captureDisplayRegion(fallbackBounds);
+      } catch (error) {
+        diagnostics.record('warning', 'capture', 'Fast visible-region capture failed; trying window capture fallback.', error);
+      }
+    }
+
     if (process.platform === 'win32' && handle) {
       try {
         const { stdout } = await execFileAsync('powershell.exe', [
@@ -63,6 +71,7 @@ export class CaptureService {
   }
 
   async captureDisplayRegion(bounds: CaptureBounds): Promise<CaptureResult> {
+    const start = Date.now();
     const display = screen.getDisplayMatching(bounds);
     const fullDisplay = await this.capturePrimaryDisplay(display.id);
     if (!fullDisplay.bounds) return fullDisplay;
@@ -75,11 +84,14 @@ export class CaptureService {
     const metadata = await sharp(fullDisplay.png).metadata();
     const extractWidth = Math.min(width, Math.max(1, (metadata.width ?? width) - left));
     const extractHeight = Math.min(height, Math.max(1, (metadata.height ?? height) - top));
-    return {
+    const result = {
       png: await sharp(fullDisplay.png).extract({ left, top, width: extractWidth, height: extractHeight }).png().toBuffer(),
       dpiScale: fullDisplay.dpiScale,
       bounds
     };
+    const elapsed = Date.now() - start;
+    if (elapsed > 1000) diagnostics.record('warning', 'capture', `Visible-region capture took ${elapsed} ms.`);
+    return result;
   }
 
   async capturePrimaryDisplay(displayId?: number): Promise<CaptureResult> {
