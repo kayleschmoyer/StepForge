@@ -35,8 +35,17 @@ const hooks = new InputHookService();
 const processor = new StepProcessor(captureService, imageOps, imageStorage, windowTracker);
 const engine = new RecordingEngine(storage, hooks, processor, () => settings.load(), () => editorWindow);
 const exporter = new ExportService();
-const updater = new AutoUpdaterBridge(() => editorWindow);
+const updater = new AutoUpdaterBridge(() => editorWindow, prepareForUpdateInstall);
 let trayMenu: TrayMenu | null = null;
+
+function prepareForUpdateInstall(): void {
+  isQuitting = true;
+  globalShortcut.unregisterAll();
+  hooks.stop();
+  hudWindow?.hide();
+  trayMenu?.destroy();
+  trayMenu = null;
+}
 
 function createEditorWindow(): void {
   editorWindow = new BrowserWindow({

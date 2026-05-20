@@ -72,7 +72,7 @@ const api: StepForgeBridge = {
   update: {
     check: () => ipcRenderer.invoke(IPC.UpdateCheck),
     download: () => ipcRenderer.invoke(IPC.UpdateDownload),
-    install: () => ipcRenderer.send(IPC.UpdateInstall),
+    install: () => ipcRenderer.invoke(IPC.UpdateInstall),
     onStatus: (cb) => subscribe(IPC.UpdateStatus, cb)
   },
   capture: {

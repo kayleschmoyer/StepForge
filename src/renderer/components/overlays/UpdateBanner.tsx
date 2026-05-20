@@ -44,6 +44,9 @@ export function UpdateBanner() {
   } else if (status.status === 'downloaded') {
     label = `Restart to install v${status.version}`;
     Icon = Download;
+  } else if (status.status === 'installing') {
+    label = 'Installing update…';
+    Icon = RefreshCw;
   } else if (status.status === 'error') {
     label = 'Update failed — retry';
     Icon = RefreshCw;

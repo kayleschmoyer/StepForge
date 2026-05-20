@@ -144,6 +144,7 @@ export type UpdateStatus =
   | { status: 'available'; version: string; releaseNotes?: string }
   | { status: 'downloading'; percent: number; bytesPerSecond: number }
   | { status: 'downloaded'; version: string }
+  | { status: 'installing' }
   | { status: 'error'; message: string };
 
 export interface StepUpdatePayload {
@@ -256,7 +257,7 @@ export interface StepForgeBridge {
   update: {
     check: () => Promise<void>;
     download: () => Promise<void>;
-    install: () => void;
+    install: () => Promise<void>;
     onStatus: (cb: (status: UpdateStatus) => void) => () => void;
   };
   capture: {

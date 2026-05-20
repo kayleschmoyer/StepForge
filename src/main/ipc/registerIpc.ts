@@ -182,7 +182,7 @@ export function registerIpc(context: IpcContext): void {
 
   ipcMain.handle(IPC.UpdateCheck, async () => context.updater.check());
   ipcMain.handle(IPC.UpdateDownload, async () => context.updater.download());
-  ipcMain.on(IPC.UpdateInstall, () => context.updater.install());
+  ipcMain.handle(IPC.UpdateInstall, async () => context.updater.install());
 
   // ── App ─────────────────────────────────────────────────
   ipcMain.handle(IPC.AppPing, async () => 'pong');

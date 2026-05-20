@@ -1,11 +1,15 @@
 import { app, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { IPC, type UpdateStatus } from '@shared/models/Ipc';
+import { diagnostics } from '../services/diagnostics/DiagnosticsStore';
 
 export class AutoUpdaterBridge {
   private interval: NodeJS.Timeout | null = null;
 
-  constructor(private editorProvider: () => BrowserWindow | null) {
+  constructor(
+    private editorProvider: () => BrowserWindow | null,
+    private prepareForInstall: () => Promise<void> | void = () => undefined
+  ) {
     autoUpdater.autoDownload = false;
     autoUpdater.logger = null;
   }
@@ -17,6 +21,8 @@ export class AutoUpdaterBridge {
     autoUpdater.on('download-progress', (progress) => this.send({ status: 'downloading', percent: progress.percent, bytesPerSecond: progress.bytesPerSecond }));
     autoUpdater.on('update-downloaded', (info) => this.send({ status: 'downloaded', version: info.version }));
     autoUpdater.on('error', (error) => this.handleError(error));
+    const updaterEvents = autoUpdater as unknown as { on: (eventName: 'before-quit-for-update', listener: () => void) => void };
+    updaterEvents.on('before-quit-for-update', () => diagnostics.record('info', 'updater', 'Quitting StepForge to install update.'));
     setTimeout(() => void this.check(), 5000);
     this.interval = setInterval(() => void this.check(), 4 * 60 * 60 * 1000);
   }
@@ -43,8 +49,19 @@ export class AutoUpdaterBridge {
     await autoUpdater.downloadUpdate();
   }
 
-  install(): void {
-    autoUpdater.quitAndInstall();
+  async install(): Promise<void> {
+    if (!app.isPackaged) {
+      this.send({ status: 'not-available' });
+      return;
+    }
+    this.send({ status: 'installing' });
+    diagnostics.record('info', 'updater', 'Preparing to install downloaded update.');
+    try {
+      await this.prepareForInstall();
+      setImmediate(() => autoUpdater.quitAndInstall(false, true));
+    } catch (error) {
+      this.handleError(toError(error));
+    }
   }
 
   private send(status: UpdateStatus): void {
