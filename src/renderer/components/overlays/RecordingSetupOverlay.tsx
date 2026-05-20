@@ -10,6 +10,7 @@ export function RecordingSetupOverlay() {
   const setOpen = useProjectStore((state) => state.setRecordingSetupOpen);
   const [jiraNumber, setJiraNumber] = useState('');
   const [description, setDescription] = useState('');
+  const [version, setVersion] = useState('');
   const [starting, setStarting] = useState(false);
   const jiraRef = useRef<HTMLInputElement | null>(null);
 
@@ -17,6 +18,7 @@ export function RecordingSetupOverlay() {
     if (!open) return;
     setJiraNumber('');
     setDescription('');
+    setVersion('');
     setStarting(false);
     const timer = window.setTimeout(() => jiraRef.current?.focus(), 40);
     return () => window.clearTimeout(timer);
@@ -41,7 +43,7 @@ export function RecordingSetupOverlay() {
     if (!canStart) return;
     setStarting(true);
     try {
-      await beginRecordingWithDetails(jiraNumber, description);
+      await beginRecordingWithDetails(jiraNumber, description, version);
       setOpen(false);
     } finally {
       setStarting(false);
@@ -196,6 +198,28 @@ export function RecordingSetupOverlay() {
               padding: '10px 11px'
             }}
           />
+
+          <div style={{ marginTop: 14 }}>
+            <FieldLabel>Version</FieldLabel>
+            <input
+              value={version}
+              onChange={(event) => setVersion(event.target.value)}
+              placeholder="Example: 2026.05.20 / 8.4.1"
+              disabled={starting}
+              style={{
+                width: '100%',
+                height: 36,
+                borderRadius: 7,
+                border: '1px solid var(--ksr-border-1)',
+                background: 'var(--ksr-surf-1)',
+                color: 'var(--ksr-text-0)',
+                fontFamily: 'var(--ksr-font-sans)',
+                fontSize: 13,
+                outline: 'none',
+                padding: '0 11px'
+              }}
+            />
+          </div>
         </div>
 
         <div

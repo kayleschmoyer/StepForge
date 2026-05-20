@@ -8,8 +8,7 @@ export async function exportMarkdown(project: Project, options: ExportOptions): 
   if (options.includeScreenshots) await mkdir(imageDirectory, { recursive: true });
   const lines: string[] = [`# ${project.metadata.title}`, ''];
   if (options.includeMetadata) {
-    lines.push(`- Application: ${project.metadata.app || '-'}`);
-    lines.push(`- Build: ${project.metadata.build || '-'}`);
+    lines.push(`- Version: ${project.metadata.build || '-'}`);
     lines.push(`- Environment: ${project.metadata.env || '-'}`);
     lines.push(`- Priority: ${project.metadata.priority || '-'}`, '');
   }

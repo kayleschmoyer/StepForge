@@ -33,8 +33,7 @@ function metadata(project: Project, options: ExportOptions): string {
   const items = [
     ['VAST / Jira', project.metadata.jiraKey || '-'],
     ['Tester', project.metadata.tester],
-    ['Application', project.metadata.app],
-    ['Build / Version', project.metadata.build],
+    ['Version', project.metadata.build],
     ['Environment', project.metadata.env],
     ['Priority', project.metadata.priority]
   ];

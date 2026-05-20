@@ -4,7 +4,7 @@ export async function startRecordingWithDetails(): Promise<void> {
   useProjectStore.getState().setRecordingSetupOpen(true);
 }
 
-export async function beginRecordingWithDetails(jiraNumber: string, description: string): Promise<void> {
+export async function beginRecordingWithDetails(jiraNumber: string, description: string, version: string): Promise<void> {
   const jiraKey = normalizeJiraKey(jiraNumber);
   if (!jiraKey) return;
 
@@ -12,8 +12,9 @@ export async function beginRecordingWithDetails(jiraNumber: string, description:
   const project = await window.stepForge.project.create({ title, jiraKey });
   useProjectStore.getState().setProject(project);
   useProjectStore.getState().setView('EDITOR');
-  useProjectStore.getState().updateMetadata({ jiraKey, title });
-  await window.stepForge.project.updateMetadata({ patch: { jiraKey, title } });
+  const build = version.trim();
+  useProjectStore.getState().updateMetadata({ jiraKey, title, build });
+  await window.stepForge.project.updateMetadata({ patch: { jiraKey, title, build } });
   await window.stepForge.recording.start();
 }
 

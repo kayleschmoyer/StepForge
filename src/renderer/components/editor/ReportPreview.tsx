@@ -150,7 +150,7 @@ function SummaryStrip({
   compact: boolean;
 }) {
   const items: [string, string][] = [
-    ['Build', meta.build || '-'],
+    ['Version', meta.build || '-'],
     ['Priority', meta.priority || '-'],
     ['Tester', meta.tester || '-'],
     ['Captured', `${stepCount} steps`],

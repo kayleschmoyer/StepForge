@@ -14,7 +14,6 @@ export type AnnotationTool =
   | 'arrow'
   | 'rect'
   | 'circle'
-  | 'text'
   | 'number'
   | 'blur'
   | 'redact';

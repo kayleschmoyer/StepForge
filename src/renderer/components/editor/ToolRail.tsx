@@ -3,7 +3,6 @@ import {
   ArrowUpRight,
   Square,
   Circle,
-  Type,
   CircleDot,
   Droplet,
   EyeOff
@@ -24,7 +23,6 @@ const TOOLS: ToolDef[] = [
   { id: 'arrow', Icon: ArrowUpRight, label: 'Arrow' },
   { id: 'rect', Icon: Square, label: 'Rectangle' },
   { id: 'circle', Icon: Circle, label: 'Highlight' },
-  { id: 'text', Icon: Type, label: 'Text' },
   { id: 'number', Icon: CircleDot, label: 'Number badge' },
   { id: 'blur', Icon: Droplet, label: 'Blur' },
   { id: 'redact', Icon: EyeOff, label: 'Redact' }

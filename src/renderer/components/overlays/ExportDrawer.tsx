@@ -180,7 +180,7 @@ export function ExportDrawer() {
               Export Report
             </div>
             <div style={{ fontSize: 11, color: 'var(--ksr-text-3)', marginTop: 2 }}>
-              {project.steps.length} steps ready · {project.metadata.app || '—'}
+              {project.steps.length} steps ready · {project.metadata.build || 'No version'}
             </div>
           </div>
           <button
@@ -583,7 +583,7 @@ function buildXrayText(project: Project): string {
     `Title: ${meta.jiraKey ? `${meta.jiraKey} - ` : ''}${meta.title || 'QA Session Report'}`,
     `Tester: ${meta.tester || '-'}`,
     `Environment: ${meta.env || '-'}`,
-    `Build: ${meta.build || '-'}`,
+    `Version: ${meta.build || '-'}`,
     '',
     'Expected:',
     meta.expected || '-',
