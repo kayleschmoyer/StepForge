@@ -1,4 +1,5 @@
 import {
+  app,
   BrowserWindow,
   dialog,
   ipcMain,
@@ -48,7 +49,7 @@ export function registerIpc(context: IpcContext): void {
     if (w.isMaximized()) w.unmaximize();
     else w.maximize();
   });
-  ipcMain.on(IPC.WindowClose, () => getEditorWindow()?.close());
+  ipcMain.on(IPC.WindowClose, () => app.quit());
 
   ipcMain.handle(IPC.RecordingStart, async () => {
     await context.engine.start();

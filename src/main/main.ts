@@ -23,6 +23,7 @@ const isDev = !app.isPackaged;
 
 let editorWindow: BrowserWindow | null = null;
 let hudWindow: HudHandle | null = null;
+let isQuitting = false;
 
 const settings = new SettingsStore();
 const storage = new SessionStorage(() => settings.load());
@@ -75,6 +76,17 @@ function createEditorWindow(): void {
     return { action: 'deny' };
   });
 
+  editorWindow.on('close', () => {
+    if (!isQuitting) {
+      isQuitting = true;
+      app.quit();
+    }
+  });
+
+  editorWindow.on('closed', () => {
+    editorWindow = null;
+  });
+
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
     editorWindow.loadURL(process.env['ELECTRON_RENDERER_URL'] + '/index.html');
   } else {
@@ -100,14 +112,23 @@ app.whenReady().then(() => {
 });
 
 app.on('second-instance', () => {
-  if (!editorWindow) return;
+  if (!editorWindow || editorWindow.isDestroyed()) {
+    createEditorWindow();
+    return;
+  }
   if (editorWindow.isMinimized()) editorWindow.restore();
   editorWindow.show();
   editorWindow.focus();
 });
 
+app.on('before-quit', () => {
+  isQuitting = true;
+});
+
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
+  hooks.stop();
+  hudWindow?.hide();
   trayMenu?.destroy();
   updater.stop();
 });
