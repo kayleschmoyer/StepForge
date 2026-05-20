@@ -30,12 +30,18 @@ export class CaptureService {
           this.scriptPath('capture-window.ps1'),
           '-Handle',
           handle
-        ], { windowsHide: true, maxBuffer: 80 * 1024 * 1024 });
-        const parsed = JSON.parse(stdout.trim()) as { pngBase64: string; dpiScale?: { x: number; y: number }; bounds?: CaptureResult['bounds'] };
+        ], { windowsHide: true, maxBuffer: 80 * 1024 * 1024, timeout: 12000 });
+        const parsed = JSON.parse(stdout.trim()) as { pngBase64: string; dpiScale?: { x: number; y: number }; bounds?: CaptureResult['bounds']; captureMethod?: string };
+        if (parsed.captureMethod && parsed.captureMethod !== 'print-window') {
+          diagnostics.record('info', 'capture', `Used ${parsed.captureMethod} capture for window screenshot.`);
+        }
         return {
           png: Buffer.from(parsed.pngBase64, 'base64'),
           dpiScale: parsed.dpiScale ?? { x: 1, y: 1 },
-          bounds: parsed.bounds
+          bounds: parsed.bounds,
+          warnings: parsed.captureMethod === 'visible-region-remote'
+            ? [{ kind: 'remote-session', message: 'Remote Desktop capture used the visible window region for this step.' }]
+            : undefined
         };
       } catch (error) {
         console.warn('[capture] window capture failed; falling back to window bounds crop', error);

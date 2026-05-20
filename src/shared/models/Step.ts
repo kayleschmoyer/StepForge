@@ -43,7 +43,7 @@ export interface ElementInfo {
 }
 
 export interface CaptureWarning {
-  kind: 'offscreen' | 'minimized' | 'elevated' | 'multi-monitor' | 'dpi-mismatch';
+  kind: 'offscreen' | 'minimized' | 'elevated' | 'multi-monitor' | 'dpi-mismatch' | 'remote-session';
   message: string;
 }
 

@@ -60,10 +60,19 @@ $api = "https://api.github.com/repos/$owner/$repo/releases/latest"
 try {
   $release = Invoke-RestMethod -Uri $api -Headers @{ 'User-Agent' = 'StepForge updater verifier' }
   $assetNames = @($release.assets | ForEach-Object { $_.name })
+  $missingAssets = @()
   foreach ($required in @('latest.yml', $installerName, "$installerName.blockmap")) {
     if ($assetNames -notcontains $required) {
-      throw "Published release '$($release.tag_name)' is missing asset '$required'."
+      $missingAssets += $required
     }
+  }
+  if ($missingAssets.Count -gt 0) {
+    $message = "Published release '$($release.tag_name)' does not contain current version $version assets: $($missingAssets -join ', ')."
+    if (-not $RequirePublished) {
+      Write-Warning "$message This is expected before publishing v$version."
+      exit 0
+    }
+    throw $message
   }
   Write-Host "[verify-updater] published release OK: $($release.tag_name)"
 }

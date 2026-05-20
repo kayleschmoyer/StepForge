@@ -27,7 +27,7 @@ export class WindowTracker {
         this.scriptPath()
       ];
       if (typeof x === 'number' && typeof y === 'number') args.push('-X', String(Math.round(x)), '-Y', String(Math.round(y)));
-      const { stdout } = await execFileAsync('powershell.exe', args, { windowsHide: true, maxBuffer: 1024 * 1024 });
+      const { stdout } = await execFileAsync('powershell.exe', args, { windowsHide: true, maxBuffer: 1024 * 1024, timeout: 5000 });
       const parsed = JSON.parse(stdout.trim()) as WindowInfo;
       return parsed.handle ? parsed : undefined;
     } catch (error) {

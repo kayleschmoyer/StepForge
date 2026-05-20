@@ -46,7 +46,7 @@ export interface AppSettings {
 }
 
 export const defaultAppSettings: AppSettings = {
-  captureDelayMs: 150,
+  captureDelayMs: 75,
   debounceIntervalMs: 200,
   doubleClickThresholdMs: 350,
   captureScrollEvents: true,
