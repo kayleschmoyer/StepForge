@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, shell } from 'electron';
+import { app, BrowserWindow, globalShortcut, Menu, MenuItem, shell } from 'electron';
 import { join } from 'node:path';
 import { writeFileSync } from 'node:fs';
 import { registerIpc } from './ipc/registerIpc';
@@ -109,6 +109,37 @@ function createEditorWindow(): void {
 
   editorWindow.on('focus', () => {
     void updater.check();
+  });
+
+  editorWindow.webContents.on('context-menu', (_event, params) => {
+    if (!editorWindow) return;
+    const menu = new Menu();
+    if (params.misspelledWord) {
+      for (const suggestion of params.dictionarySuggestions.slice(0, 6)) {
+        menu.append(new MenuItem({
+          label: suggestion,
+          click: () => editorWindow?.webContents.replaceMisspelling(suggestion)
+        }));
+      }
+      if (params.dictionarySuggestions.length === 0) {
+        menu.append(new MenuItem({ label: 'No suggestions', enabled: false }));
+      }
+      menu.append(new MenuItem({ type: 'separator' }));
+      menu.append(new MenuItem({
+        label: `Add "${params.misspelledWord}" to dictionary`,
+        click: () => editorWindow?.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord)
+      }));
+      menu.append(new MenuItem({ type: 'separator' }));
+    }
+    if (params.isEditable) {
+      menu.append(new MenuItem({ role: 'cut' }));
+      menu.append(new MenuItem({ role: 'copy' }));
+      menu.append(new MenuItem({ role: 'paste' }));
+      menu.append(new MenuItem({ role: 'selectAll' }));
+      menu.popup({ window: editorWindow });
+    } else if (params.misspelledWord) {
+      menu.popup({ window: editorWindow });
+    }
   });
 
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {

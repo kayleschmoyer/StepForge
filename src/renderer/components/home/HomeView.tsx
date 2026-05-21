@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   CircleDot,
   Folder,
-  Upload,
   FileText,
   History,
   Trash2
@@ -49,16 +48,6 @@ export function HomeView() {
       setProject(project);
       setView('EDITOR');
     }
-  };
-
-  const handleImportScreenshots = async () => {
-    const path = await window.stepForge.dialog.openFile({
-      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'] }],
-      properties: ['openFile']
-    });
-    if (!path) return;
-    await window.stepForge.step.addScreenshot({ sourcePath: path });
-    setView('EDITOR');
   };
 
   const handleRestore = async () => {
@@ -248,7 +237,7 @@ export function HomeView() {
           ref={recentRef}
           style={{
             display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr',
+            gridTemplateColumns: '2fr 1fr',
             gap: 14,
             marginBottom: 36
           }}
@@ -259,12 +248,6 @@ export function HomeView() {
             title="Open session"
             sub="Resume a saved .ksr project"
             onClick={handleOpenSession}
-          />
-          <SecondaryCard
-            icon={<Upload size={17} />}
-            title="Import screenshots"
-            sub="Build a manual report from images"
-            onClick={handleImportScreenshots}
           />
         </div>
 

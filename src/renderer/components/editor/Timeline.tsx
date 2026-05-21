@@ -1,5 +1,5 @@
-import { MousePointerClick, Keyboard, ArrowDown, ArrowRight, Plus, Bug, AlertTriangle, ImagePlus } from 'lucide-react';
-import type { CSSProperties } from 'react';
+import { MousePointerClick, Keyboard, ArrowDown, ArrowRight, Plus, Bug, AlertTriangle, ImagePlus, X } from 'lucide-react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import type { RecordedStep, ActionType } from '@shared/models/Step';
 
@@ -25,16 +25,7 @@ export function Timeline() {
   const steps = useProjectStore((s) => s.project?.steps ?? []);
   const selectedId = useProjectStore((s) => s.selectedStepId);
   const selectStep = useProjectStore((s) => s.selectStep);
-
-  const handleAddManual = () => void window.stepForge.step.addManual();
-  const handleAddScreenshot = async () => {
-    const sourcePath = await window.stepForge.dialog.openFile({
-      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'] }],
-      properties: ['openFile']
-    });
-    if (!sourcePath) return;
-    await window.stepForge.step.addScreenshot({ sourcePath });
-  };
+  const [addOpen, setAddOpen] = useState(false);
 
   return (
     <div
@@ -60,19 +51,196 @@ export function Timeline() {
         />
       ))}
       <button
-        title="Add manual note"
-        onClick={handleAddManual}
+        title="Add new step — note, screenshot, or paste"
+        onClick={() => setAddOpen(true)}
         style={addButtonStyle}
       >
         <Plus size={18} />
       </button>
-      <button
-        title="Add screenshot"
-        onClick={() => void handleAddScreenshot()}
-        style={addButtonStyle}
+      {addOpen && <AddStepModal onClose={() => setAddOpen(false)} />}
+    </div>
+  );
+}
+
+function AddStepModal({ onClose }: { onClose: () => void }) {
+  const [description, setDescription] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const handlePaste = (event: ClipboardEvent) => {
+      const file = Array.from(event.clipboardData?.items ?? [])
+        .find((item) => item.kind === 'file' && item.type.startsWith('image/'))
+        ?.getAsFile();
+      if (!file) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setBusy(true);
+      void file.arrayBuffer().then(async (imageBytes) => {
+        await window.stepForge.step.addScreenshot({
+          imageBytes,
+          description: description.trim() || 'Pasted screenshot'
+        });
+        onClose();
+      });
+    };
+    window.addEventListener('paste', handlePaste, true);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('paste', handlePaste, true);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [description, onClose]);
+
+  const handleBrowse = async () => {
+    const sourcePath = await window.stepForge.dialog.openFile({
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'] }],
+      properties: ['openFile']
+    });
+    if (!sourcePath) return;
+    setBusy(true);
+    await window.stepForge.step.addScreenshot({
+      sourcePath,
+      description: description.trim() || undefined
+    });
+    onClose();
+  };
+
+  const handleAddNote = async () => {
+    setBusy(true);
+    await window.stepForge.step.addManual();
+    onClose();
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(2,6,10,0.55)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9000
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: 460,
+          maxWidth: 'calc(100vw - 32px)',
+          background: 'var(--ksr-surf-1)',
+          border: '1px solid var(--ksr-border-1)',
+          borderRadius: 14,
+          padding: 22,
+          fontFamily: 'var(--ksr-font-sans)',
+          color: 'var(--ksr-text-1)',
+          boxShadow: '0 24px 48px rgba(0,0,0,0.4)'
+        }}
       >
-        <ImagePlus size={18} />
-      </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700 }}>Add new step</div>
+          <button
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', color: 'var(--ksr-text-3)', cursor: 'pointer' }}
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ksr-text-3)', letterSpacing: '0.06em' }}>
+          Description (optional)
+        </label>
+        <input
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          spellCheck
+          placeholder="Describe what this step shows…"
+          autoFocus
+          style={{
+            width: '100%',
+            marginTop: 6,
+            marginBottom: 14,
+            padding: '8px 10px',
+            background: 'var(--ksr-surf-0)',
+            border: '1px solid var(--ksr-border-1)',
+            borderRadius: 8,
+            color: 'var(--ksr-text-1)',
+            fontFamily: 'inherit',
+            fontSize: 13
+          }}
+        />
+
+        <button
+          onClick={() => void handleBrowse()}
+          disabled={busy}
+          style={{
+            width: '100%',
+            padding: '18px 14px',
+            border: '1.5px dashed var(--ksr-border-1)',
+            borderRadius: 10,
+            background: 'transparent',
+            color: 'var(--ksr-text-2)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            cursor: busy ? 'progress' : 'pointer',
+            fontFamily: 'inherit'
+          }}
+        >
+          <ImagePlus size={22} color={ACCENT} />
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ksr-text-1)' }}>
+            Click to choose a screenshot
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--ksr-text-3)' }}>
+            or press Ctrl+V to paste an image from your clipboard
+          </div>
+        </button>
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => void handleAddNote()}
+            disabled={busy}
+            style={{
+              padding: '8px 14px',
+              background: 'transparent',
+              border: '1px solid var(--ksr-border-1)',
+              borderRadius: 8,
+              color: 'var(--ksr-text-1)',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: busy ? 'progress' : 'pointer'
+            }}
+          >
+            Add note without screenshot
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px 14px',
+              background: 'transparent',
+              border: '1px solid var(--ksr-border-1)',
+              borderRadius: 8,
+              color: 'var(--ksr-text-2)',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
