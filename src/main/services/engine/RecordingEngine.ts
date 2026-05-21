@@ -27,6 +27,7 @@ export class RecordingEngine extends EventEmitter {
   private startedAtMs = 0;
   private timer: NodeJS.Timeout | null = null;
   private processing = Promise.resolve();
+  private appendQueue: Promise<void> = Promise.resolve();
 
   constructor(
     private storage: SessionStorage,
@@ -197,13 +198,26 @@ export class RecordingEngine extends EventEmitter {
   }
 
   private enqueueInput(event: InputEvent): void {
-    this.processing = this.processing.then(async () => {
-      if (!this.activeProject || this.activeProject.state !== 'RECORDING') return;
-      if (isPointerEvent(event) && this.isInsideIgnoredWindow(event.x, event.y)) return;
-      const step = await this.processor.process(this.activeProject, event, await this.settingsProvider());
+    if (!this.activeProject || this.activeProject.state !== 'RECORDING') return;
+    if (isPointerEvent(event) && this.isInsideIgnoredWindow(event.x, event.y)) return;
+
+    // Capture concurrently so rapid clicks don't queue behind each other.
+    const projectAtEvent = this.activeProject;
+    const capturePromise = this.settingsProvider()
+      .then((settings) => this.processor.process(projectAtEvent, event, settings))
+      .catch((error) => {
+        console.error('[recording-engine] input processing failed', error);
+        return null;
+      });
+
+    // Serialize only the append so step order and numbering stay deterministic.
+    this.appendQueue = this.appendQueue.then(async () => {
+      const step = await capturePromise;
       if (!step) return;
-      await this.appendStep(step);
-    }).catch((error) => console.error('[recording-engine] input processing failed', error));
+      if (!this.activeProject || this.activeProject.state !== 'RECORDING') return;
+      const numbered: RecordedStep = { ...step, stepNumber: this.activeProject.nextStepNumber };
+      await this.appendStep(numbered);
+    }).catch((error) => console.error('[recording-engine] input append failed', error));
   }
 
   private isInsideIgnoredWindow(x: number, y: number): boolean {

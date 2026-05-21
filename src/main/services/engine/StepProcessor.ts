@@ -20,11 +20,31 @@ export class StepProcessor {
 
   async process(project: Project, event: InputEvent, settings: AppSettings): Promise<RecordedStep | null> {
     const startedAt = Date.now();
-    const windowInfo = event.kind === 'mouse' || event.kind === 'wheel'
-      ? await this.windowTracker.getWindowAtPoint(event.x, event.y)
-      : await this.windowTracker.getForegroundWindow();
-    const windowLookupMs = Date.now() - startedAt;
-    if ((event.kind === 'mouse' || event.kind === 'wheel') && !windowInfo) {
+    const isPointer = event.kind === 'mouse' || event.kind === 'wheel';
+
+    // Kick off window probe and screen capture concurrently. Screen state matters
+    // at click time, so capturing immediately avoids losing the moment while we
+    // wait on the PowerShell window probe.
+    const windowPromise = isPointer
+      ? this.windowTracker.getWindowAtPoint(event.x, event.y)
+      : this.windowTracker.getForegroundWindow();
+
+    const optionalDelay = settings.captureDelayMs > 0 ? delay(settings.captureDelayMs) : Promise.resolve();
+    const capturePromise = optionalDelay.then(async () => {
+      // For point-based events we need bounds before window-only capture, so we
+      // wait on the probe in that path; otherwise we capture the primary display
+      // immediately.
+      if (settings.windowOnlyCapture && isPointer) {
+        const info = await windowPromise;
+        return this.captureService.captureWindow(info?.handle, info?.bounds);
+      }
+      return this.captureService.captureWindow();
+    });
+
+    const [windowInfo, capture] = await Promise.all([windowPromise, capturePromise]);
+    const elapsedAfterCapture = Date.now() - startedAt;
+
+    if (isPointer && !windowInfo) {
       diagnostics.record('info', 'recording', 'Skipped input because no capturable window was found.');
       return null;
     }
@@ -32,22 +52,17 @@ export class StepProcessor {
       diagnostics.record('info', 'recording', `Skipped excluded window: ${windowInfo?.title || windowInfo?.processName || 'unknown'}`);
       return null;
     }
-    await delay(settings.captureDelayMs);
-    const capture = await this.captureService.captureWindow(
-      settings.windowOnlyCapture ? windowInfo?.handle : undefined,
-      settings.windowOnlyCapture ? windowInfo?.bounds : undefined
-    );
-    const captureMs = Date.now() - startedAt - windowLookupMs - settings.captureDelayMs;
+
     const stepId = `step-${randomUUID()}`;
     const screenshot = capture.png;
-    const thumbnailPromise = this.imageOps.thumbnail(screenshot);
-    const screenshotPathPromise = this.imageStorage.saveScreenshot(project, stepId, screenshot);
-    const thumbnail = await thumbnailPromise;
-    const screenshotPath = await screenshotPathPromise;
+    const [thumbnail, screenshotPath] = await Promise.all([
+      this.imageOps.thumbnail(screenshot),
+      this.imageStorage.saveScreenshot(project, stepId, screenshot)
+    ]);
     const thumbnailPath = await this.imageStorage.saveThumbnail(project, stepId, thumbnail);
     const totalMs = Date.now() - startedAt;
     if (totalMs > 1200) {
-      diagnostics.record('warning', 'recording', `Step capture took ${totalMs} ms.`, `window=${windowLookupMs} ms, capture=${Math.max(0, captureMs)} ms`);
+      diagnostics.record('warning', 'recording', `Step capture took ${totalMs} ms.`, `pre-save=${elapsedAfterCapture} ms`);
     }
 
     return {
