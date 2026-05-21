@@ -12,7 +12,6 @@ interface Props {
   disabled?: boolean;
 }
 
-const DEFAULT_COLOR = '#00c4ff';
 const DEFAULT_STROKE = 4;
 const DEFAULT_FONT = 22;
 
@@ -30,6 +29,7 @@ function newId(): string {
 
 export function AnnotationLayer({ step, viewWidth, viewHeight, nativeWidth, nativeHeight, disabled = false }: Props) {
   const tool = useProjectStore((s) => s.activeTool);
+  const accentColor = useProjectStore((s) => s.settings.accentColor);
   const setAnnotations = useProjectStore((s) => s.setStepAnnotations);
   const [draft, setDraft] = useState<Annotation | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -85,17 +85,17 @@ export function AnnotationLayer({ step, viewWidth, viewHeight, nativeWidth, nati
     let annotation: Annotation;
     switch (tool) {
       case 'arrow':
-        annotation = { id: newId(), kind: 'arrow', from: [x, y], to: [x, y], color: DEFAULT_COLOR, strokeWidth: DEFAULT_STROKE };
+        annotation = { id: newId(), kind: 'arrow', from: [x, y], to: [x, y], color: accentColor, strokeWidth: DEFAULT_STROKE };
         break;
       case 'rect':
-        annotation = { id: newId(), kind: 'rect', bounds: [x, y, 1, 1], color: DEFAULT_COLOR, strokeWidth: DEFAULT_STROKE };
+        annotation = { id: newId(), kind: 'rect', bounds: [x, y, 1, 1], color: accentColor, strokeWidth: DEFAULT_STROKE };
         break;
       case 'circle':
-        annotation = { id: newId(), kind: 'circle', bounds: [x, y, 1, 1], color: DEFAULT_COLOR, strokeWidth: DEFAULT_STROKE };
+        annotation = { id: newId(), kind: 'circle', bounds: [x, y, 1, 1], color: accentColor, strokeWidth: DEFAULT_STROKE };
         break;
       case 'number': {
         const existing = step.annotations.filter((candidate) => candidate.kind === 'number');
-        persist([...step.annotations, { id: newId(), kind: 'number', at: [x, y], n: existing.length + 1, color: DEFAULT_COLOR }]);
+        persist([...step.annotations, { id: newId(), kind: 'number', at: [x, y], n: existing.length + 1, color: accentColor }]);
         startRef.current = null;
         return;
       }

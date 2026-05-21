@@ -22,13 +22,27 @@ const ITEMS: RailItem[] = [
     badgeSelector: (steps) => steps
   },
   { id: 'sessions', Icon: History, label: 'Sessions' },
-  { id: 'tray', Icon: Bell, label: 'Tray' }
+  { id: 'tray', Icon: Bell, label: 'Diagnostics' }
 ];
 
 export function Rail() {
   const view = useProjectStore((s) => s.view);
   const setView = useProjectStore((s) => s.setView);
+  const setDiagnosticsOpen = useProjectStore((s) => s.setDiagnosticsOpen);
   const stepCount = useProjectStore((s) => s.project?.steps.length ?? 0);
+
+  const handleItemClick = (item: RailItem) => {
+    if (item.target) {
+      setView(item.target);
+      return;
+    }
+    if (item.id === 'sessions') {
+      setView('HOME');
+      window.dispatchEvent(new CustomEvent('stepforge:focusRecentSessions'));
+      return;
+    }
+    if (item.id === 'tray') setDiagnosticsOpen(true);
+  };
 
   return (
     <nav
@@ -51,7 +65,7 @@ export function Rail() {
           <button
             key={it.id}
             title={it.label}
-            onClick={() => it.target && setView(it.target)}
+            onClick={() => handleItemClick(it)}
             style={{
               position: 'relative',
               width: 38,

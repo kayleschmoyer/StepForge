@@ -50,7 +50,7 @@ export default function App() {
     const offSettings = window.stepForge.settings.onChanged(setSettings);
     const offProject = window.stepForge.project.onChanged((nextProject) => {
       setProject(nextProject);
-      setView('EDITOR');
+      setView(nextProject ? 'EDITOR' : 'HOME');
     });
     const offStepAdded = window.stepForge.step.onAdded((step) => selectStep(step.id));
     const offRecording = window.stepForge.recording.onStateChanged(setRecState);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, ArrowDown, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Download, ArrowDown, RefreshCw, CheckCircle2, RotateCcw } from 'lucide-react';
 import { useProjectStore } from '@renderer/state/projectStore';
 
 const ACCENT = 'var(--ksr-acc)';
@@ -14,14 +14,12 @@ export function UpdateBanner() {
     return () => off();
   }, [setStatus]);
 
-  if (status.status === 'idle' || status.status === 'checking') {
+  if (status.status === 'idle') {
     return null;
   }
 
   const handleClick = () => {
-    if (status.status === 'available') {
-      void window.stepForge.update.download();
-    } else if (status.status === 'downloaded') {
+    if (status.status === 'downloaded') {
       window.stepForge.update.install();
     } else if (status.status === 'error') {
       void window.stepForge.update.check();
@@ -32,25 +30,36 @@ export function UpdateBanner() {
 
   let label = 'Update';
   let Icon = ArrowDown;
-  if (status.status === 'available') {
-    label = `Update available · v${status.version}`;
+  let progress = 0;
+  if (status.status === 'checking') {
+    label = 'Checking for updates';
+    Icon = RefreshCw;
+    progress = 12;
+  } else if (status.status === 'available') {
+    label = `Preparing v${status.version}`;
     Icon = ArrowDown;
   } else if (status.status === 'not-available') {
     label = 'Up to date';
     Icon = CheckCircle2;
   } else if (status.status === 'downloading') {
-    label = `Downloading… ${Math.round(status.percent)}%`;
+    progress = Math.max(2, Math.min(100, Math.round(status.percent)));
+    label = `Updating silently · ${progress}%`;
     Icon = RefreshCw;
   } else if (status.status === 'downloaded') {
-    label = `Restart to install v${status.version}`;
-    Icon = Download;
+    progress = 100;
+    label = `Restart to apply v${status.version}`;
+    Icon = RotateCcw;
   } else if (status.status === 'installing') {
-    label = 'Installing update…';
+    progress = 100;
+    label = 'Launching installer';
     Icon = RefreshCw;
   } else if (status.status === 'error') {
     label = 'Update failed — retry';
     Icon = RefreshCw;
   }
+
+  const active = status.status === 'checking' || status.status === 'available' || status.status === 'downloading' || status.status === 'installing';
+  const error = status.status === 'error';
 
   return (
     <button
@@ -59,21 +68,38 @@ export function UpdateBanner() {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 6,
-        padding: '4px 10px',
+        gap: 7,
+        padding: '5px 10px',
         borderRadius: 999,
-        background: status.status === 'error' ? 'var(--ksr-bug-bg)' : 'var(--ksr-acc-soft)',
-        color: status.status === 'error' ? 'var(--ksr-bug-text)' : ACCENT,
-        border: `1px solid ${status.status === 'error' ? 'var(--ksr-bug-border)' : 'var(--ksr-acc-border)'}`,
+        background: error ? 'var(--ksr-bug-bg)' : 'linear-gradient(135deg, var(--ksr-acc-soft), var(--ksr-surf-1))',
+        color: error ? 'var(--ksr-bug-text)' : ACCENT,
+        border: `1px solid ${error ? 'var(--ksr-bug-border)' : 'var(--ksr-acc-border)'}`,
         fontSize: 11,
         fontWeight: 700,
         fontFamily: 'var(--ksr-font-sans)',
         cursor: 'pointer',
-        marginRight: 4
+        marginRight: 4,
+        position: 'relative',
+        overflow: 'hidden',
+        minWidth: status.status === 'downloading' ? 170 : undefined,
+        boxShadow: error ? 'none' : 'var(--ksr-acc-shadow-sm)'
       }}
     >
-      <Icon size={11} />
-      {label}
+      {progress > 0 && (
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            right: `${100 - progress}%`,
+            background: error ? 'transparent' : 'rgba(var(--ksr-acc-rgb),0.18)',
+            transition: 'right 0.24s ease',
+            pointerEvents: 'none'
+          }}
+        />
+      )}
+      <Icon size={11} style={{ position: 'relative', animation: active ? 'spin 1s linear infinite' : 'none' }} />
+      <span style={{ position: 'relative' }}>{label}</span>
     </button>
   );
 }

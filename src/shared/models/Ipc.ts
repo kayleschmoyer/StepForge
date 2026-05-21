@@ -228,7 +228,7 @@ export interface StepForgeBridge {
     deleteRecent: (sessionDirectory: string) => Promise<void>;
     updateMetadata: (payload: ProjectUpdateMetadataPayload) => Promise<void>;
     listRecent: () => Promise<RecentProject[]>;
-    onChanged: (cb: (project: Project) => void) => () => void;
+    onChanged: (cb: (project: Project | null) => void) => () => void;
   };
   step: {
     update: (payload: StepUpdatePayload) => Promise<void>;

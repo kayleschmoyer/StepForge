@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CircleDot,
   Folder,
@@ -16,17 +16,26 @@ import { startRecordingWithDetails } from '@renderer/services/startRecordingWith
 const ACCENT = 'var(--ksr-acc)';
 
 export function HomeView() {
+  const recentRef = useRef<HTMLDivElement | null>(null);
   const recovery = useProjectStore((s) => s.unsavedRecovery);
   const setUnsavedRecovery = useProjectStore((s) => s.setUnsavedRecovery);
   const setProject = useProjectStore((s) => s.setProject);
   const setView = useProjectStore((s) => s.setView);
   const recentProjects = useProjectStore((s) => s.recentProjects);
   const setRecentProjects = useProjectStore((s) => s.setRecentProjects);
+  const [deleteTarget, setDeleteTarget] = useState<RecentProject | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     void window.stepForge.recovery.check().then(setUnsavedRecovery);
     void window.stepForge.project.listRecent().then(setRecentProjects);
   }, [setUnsavedRecovery, setRecentProjects]);
+
+  useEffect(() => {
+    const focusRecent = () => recentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.addEventListener('stepforge:focusRecentSessions', focusRecent);
+    return () => window.removeEventListener('stepforge:focusRecentSessions', focusRecent);
+  }, []);
 
   const greeting = `${timeOfDayGreeting()}, ${getFirstName(useProjectStore.getState().settings.defaultTesterName)}.`;
 
@@ -44,12 +53,12 @@ export function HomeView() {
 
   const handleImportScreenshots = async () => {
     const path = await window.stepForge.dialog.openFile({
-      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif'] }],
-      properties: ['openFile', 'multiSelections']
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'] }],
+      properties: ['openFile']
     });
-    if (path) {
-      console.log('Import (not yet implemented):', path);
-    }
+    if (!path) return;
+    await window.stepForge.step.addScreenshot({ sourcePath: path });
+    setView('EDITOR');
   };
 
   const handleRestore = async () => {
@@ -64,11 +73,16 @@ export function HomeView() {
     setUnsavedRecovery(null);
   };
 
-  const handleDeleteRecent = async (project: RecentProject) => {
-    const confirmed = window.confirm(`Delete this session permanently?\n\n${project.title}`);
-    if (!confirmed) return;
-    await window.stepForge.project.deleteRecent(project.sessionDirectory);
-    setRecentProjects(await window.stepForge.project.listRecent());
+  const handleDeleteRecent = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await window.stepForge.project.deleteRecent(deleteTarget.sessionDirectory);
+      setRecentProjects(await window.stepForge.project.listRecent());
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -231,6 +245,7 @@ export function HomeView() {
 
         {/* Primary action grid */}
         <div
+          ref={recentRef}
           style={{
             display: 'grid',
             gridTemplateColumns: '2fr 1fr 1fr',
@@ -312,7 +327,7 @@ export function HomeView() {
                   setProject(project);
                   setView('EDITOR');
                 }}
-                onDelete={() => void handleDeleteRecent(r)}
+                onDelete={() => setDeleteTarget(r)}
               />
             ))}
           </div>
@@ -322,8 +337,130 @@ export function HomeView() {
 
         <FooterHints />
       </div>
+      {deleteTarget && (
+        <DeleteSessionDialog
+          project={deleteTarget}
+          deleting={deleting}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => void handleDeleteRecent()}
+        />
+      )}
     </div>
   );
+}
+
+function DeleteSessionDialog({
+  project,
+  deleting,
+  onCancel,
+  onConfirm
+}: {
+  project: RecentProject;
+  deleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 80,
+        display: 'grid',
+        placeItems: 'center',
+        background: 'rgba(0,0,0,0.58)',
+        backdropFilter: 'blur(4px)'
+      }}
+    >
+      <div
+        style={{
+          width: 420,
+          borderRadius: 14,
+          background: 'var(--ksr-surf-0)',
+          border: '1px solid var(--ksr-border-1)',
+          boxShadow: 'var(--ksr-shadow-floating)',
+          overflow: 'hidden'
+        }}
+      >
+        <div style={{ display: 'flex', gap: 14, padding: '18px 18px 16px' }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              background: 'var(--ksr-bug-bg)',
+              border: '1px solid var(--ksr-bug-border)',
+              color: 'var(--ksr-bug-text)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+          >
+            <Trash2 size={18} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ color: 'var(--ksr-text-0)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.02em' }}>
+              Delete this session?
+            </div>
+            <div style={{ color: 'var(--ksr-text-2)', fontSize: 12.5, lineHeight: 1.55, marginTop: 6 }}>
+              This permanently removes the session folder, screenshots, annotations, and export history for this recording.
+            </div>
+            <div
+              style={{
+                marginTop: 12,
+                padding: '9px 10px',
+                borderRadius: 8,
+                background: 'var(--ksr-surf-1)',
+                border: '1px solid var(--ksr-border-0)',
+                color: 'var(--ksr-text-1)',
+                fontSize: 12,
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              {project.title} · {project.stepCount} steps
+            </div>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 8,
+            padding: 14,
+            borderTop: '1px solid var(--ksr-border-0)',
+            background: 'var(--ksr-surf-1)'
+          }}
+        >
+          <button type="button" onClick={onCancel} disabled={deleting} style={dialogButtonStyle('secondary')}>
+            Keep session
+          </button>
+          <button type="button" onClick={onConfirm} disabled={deleting} style={dialogButtonStyle('danger')}>
+            {deleting ? 'Deleting...' : 'Delete permanently'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function dialogButtonStyle(kind: 'secondary' | 'danger'): React.CSSProperties {
+  return {
+    borderRadius: 7,
+    border: kind === 'danger' ? '1px solid var(--ksr-bug-border)' : '1px solid var(--ksr-border-1)',
+    background: kind === 'danger' ? 'var(--ksr-bug-bg)' : 'var(--ksr-surf-2)',
+    color: kind === 'danger' ? 'var(--ksr-bug-text)' : 'var(--ksr-text-1)',
+    cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 800,
+    padding: '8px 12px',
+    fontFamily: 'var(--ksr-font-sans)'
+  };
 }
 
 function getFirstName(full: string): string {

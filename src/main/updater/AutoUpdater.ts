@@ -6,6 +6,7 @@ import { diagnostics } from '../services/diagnostics/DiagnosticsStore';
 export class AutoUpdaterBridge {
   private interval: NodeJS.Timeout | null = null;
   private installResetTimer: NodeJS.Timeout | null = null;
+  private downloading = false;
 
   constructor(
     private editorProvider: () => BrowserWindow | null,
@@ -17,7 +18,10 @@ export class AutoUpdaterBridge {
 
   start(): void {
     autoUpdater.on('checking-for-update', () => this.send({ status: 'checking' }));
-    autoUpdater.on('update-available', (info) => this.send({ status: 'available', version: info.version, releaseNotes: String(info.releaseNotes ?? '') }));
+    autoUpdater.on('update-available', (info) => {
+      this.send({ status: 'available', version: info.version, releaseNotes: String(info.releaseNotes ?? '') });
+      void this.download();
+    });
     autoUpdater.on('update-not-available', () => this.send({ status: 'not-available' }));
     autoUpdater.on('download-progress', (progress) => this.send({ status: 'downloading', percent: progress.percent, bytesPerSecond: progress.bytesPerSecond }));
     autoUpdater.on('update-downloaded', (info) => this.send({ status: 'downloaded', version: info.version }));
@@ -51,10 +55,14 @@ export class AutoUpdaterBridge {
   }
 
   async download(): Promise<void> {
+    if (this.downloading) return;
+    this.downloading = true;
     try {
       await autoUpdater.downloadUpdate();
     } catch (error) {
       this.handleError(toError(error));
+    } finally {
+      this.downloading = false;
     }
   }
 
@@ -88,6 +96,7 @@ export class AutoUpdaterBridge {
 
   private handleError(error: Error): void {
     this.clearInstallResetTimer();
+    this.downloading = false;
     if (isNoPublishedUpdateError(error)) {
       this.send({ status: 'not-available' });
       return;

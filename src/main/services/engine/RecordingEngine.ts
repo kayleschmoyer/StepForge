@@ -9,7 +9,7 @@ import { InputHookService, type InputEvent } from '../hooks/InputHookService';
 import { StepProcessor } from './StepProcessor';
 
 export interface RecordingEngineEvents {
-  projectChanged: [Project];
+  projectChanged: [Project | null];
   stepAdded: [RecordedStep];
   stateChanged: [RecordingState];
   tick: [number];
@@ -38,7 +38,7 @@ export class RecordingEngine extends EventEmitter {
 
   setProject(project: Project | null): void {
     this.activeProject = project;
-    if (project) this.emit('projectChanged', project);
+    this.emit('projectChanged', project);
   }
 
   async start(): Promise<Project> {

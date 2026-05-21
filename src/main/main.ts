@@ -148,9 +148,9 @@ app.on('window-all-closed', () => {
 });
 
 function wireEngineEvents(): void {
-  engine.on('projectChanged', (project: Project) => {
+  engine.on('projectChanged', (project: Project | null) => {
     editorWindow?.webContents.send(IPC.ProjectChanged, project);
-    hudWindow?.updateStepCount(project.steps.filter((step) => !step.isDeleted).length);
+    hudWindow?.updateStepCount(project?.steps.filter((step) => !step.isDeleted).length ?? 0);
   });
   engine.on('stepAdded', (step: RecordedStep) => {
     editorWindow?.webContents.send(IPC.StepAdded, step);
