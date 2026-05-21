@@ -33,7 +33,7 @@ const imageOps = new ImageOps();
 const windowTracker = new WindowTracker();
 const hooks = new InputHookService();
 const processor = new StepProcessor(captureService, imageOps, imageStorage, windowTracker);
-const engine = new RecordingEngine(storage, hooks, processor, () => settings.load(), () => editorWindow);
+const engine = new RecordingEngine(storage, hooks, processor, () => settings.load(), () => editorWindow, stepForgeWindowBounds);
 const exporter = new ExportService();
 const updater = new AutoUpdaterBridge(() => editorWindow, prepareForUpdateInstall);
 let trayMenu: TrayMenu | null = null;
@@ -45,6 +45,12 @@ function prepareForUpdateInstall(): void {
   hudWindow?.hide();
   trayMenu?.destroy();
   trayMenu = null;
+}
+
+function stepForgeWindowBounds(): Electron.Rectangle[] {
+  return [editorWindow, hudWindow?.win]
+    .filter((win): win is BrowserWindow => Boolean(win && !win.isDestroyed() && win.isVisible() && !win.isMinimized()))
+    .map((win) => win.getBounds());
 }
 
 function createEditorWindow(): void {

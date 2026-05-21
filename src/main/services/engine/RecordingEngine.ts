@@ -15,6 +15,13 @@ export interface RecordingEngineEvents {
   tick: [number];
 }
 
+interface ScreenBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export class RecordingEngine extends EventEmitter {
   private activeProject: Project | null = null;
   private startedAtMs = 0;
@@ -26,7 +33,8 @@ export class RecordingEngine extends EventEmitter {
     private hooks: InputHookService,
     private processor: StepProcessor,
     private settingsProvider: () => Promise<AppSettings>,
-    private editorProvider: () => BrowserWindow | null
+    private editorProvider: () => BrowserWindow | null,
+    private ignoredBoundsProvider: () => ScreenBounds[] = () => []
   ) {
     super();
     this.hooks.on('input', (event: InputEvent) => this.enqueueInput(event));
@@ -191,10 +199,20 @@ export class RecordingEngine extends EventEmitter {
   private enqueueInput(event: InputEvent): void {
     this.processing = this.processing.then(async () => {
       if (!this.activeProject || this.activeProject.state !== 'RECORDING') return;
+      if (isPointerEvent(event) && this.isInsideIgnoredWindow(event.x, event.y)) return;
       const step = await this.processor.process(this.activeProject, event, await this.settingsProvider());
       if (!step) return;
       await this.appendStep(step);
     }).catch((error) => console.error('[recording-engine] input processing failed', error));
+  }
+
+  private isInsideIgnoredWindow(x: number, y: number): boolean {
+    return this.ignoredBoundsProvider().some((bounds) => (
+      x >= bounds.x &&
+      x <= bounds.x + bounds.width &&
+      y >= bounds.y &&
+      y <= bounds.y + bounds.height
+    ));
   }
 
   private async appendStep(step: RecordedStep): Promise<void> {
@@ -243,4 +261,8 @@ export class RecordingEngine extends EventEmitter {
 
 function renumber(steps: RecordedStep[]): RecordedStep[] {
   return steps.map((step, index) => ({ ...step, stepNumber: index + 1 }));
+}
+
+function isPointerEvent(event: InputEvent): event is Extract<InputEvent, { kind: 'mouse' | 'wheel' }> {
+  return event.kind === 'mouse' || event.kind === 'wheel';
 }

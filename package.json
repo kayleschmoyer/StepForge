@@ -1,6 +1,6 @@
 {
   "name": "stepforge",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Kayle's Steps Recorder — modern QA-documentation tool for Windows",
   "main": "out/main/index.js",
   "author": {
