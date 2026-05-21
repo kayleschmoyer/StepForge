@@ -6,6 +6,7 @@ import { diagnostics } from '../services/diagnostics/DiagnosticsStore';
 export class AutoUpdaterBridge {
   private interval: NodeJS.Timeout | null = null;
   private installResetTimer: NodeJS.Timeout | null = null;
+  private checking = false;
   private downloading = false;
 
   constructor(
@@ -32,7 +33,7 @@ export class AutoUpdaterBridge {
       diagnostics.record('info', 'updater', 'Quitting StepForge to install update.');
       void this.prepareForInstall();
     });
-    setTimeout(() => void this.check(), 5000);
+    void this.check();
     this.interval = setInterval(() => void this.check(), 4 * 60 * 60 * 1000);
   }
 
@@ -42,15 +43,19 @@ export class AutoUpdaterBridge {
   }
 
   async check(): Promise<void> {
+    if (this.checking || this.downloading) return;
     if (!app.isPackaged) {
       this.send({ status: 'not-available' });
       return;
     }
+    this.checking = true;
     this.send({ status: 'checking' });
     try {
       await autoUpdater.checkForUpdates();
     } catch (error) {
       this.handleError(toError(error));
+    } finally {
+      this.checking = false;
     }
   }
 
@@ -96,6 +101,7 @@ export class AutoUpdaterBridge {
 
   private handleError(error: Error): void {
     this.clearInstallResetTimer();
+    this.checking = false;
     this.downloading = false;
     if (isNoPublishedUpdateError(error)) {
       this.send({ status: 'not-available' });

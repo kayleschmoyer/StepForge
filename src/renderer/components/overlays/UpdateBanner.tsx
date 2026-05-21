@@ -11,6 +11,7 @@ export function UpdateBanner() {
 
   useEffect(() => {
     const off = window.stepForge.update.onStatus(setStatus);
+    void window.stepForge.update.check();
     return () => off();
   }, [setStatus]);
 
