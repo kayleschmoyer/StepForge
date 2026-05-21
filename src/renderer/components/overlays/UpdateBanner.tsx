@@ -47,11 +47,11 @@ export function UpdateBanner() {
     Icon = RefreshCw;
   } else if (status.status === 'downloaded') {
     progress = 100;
-    label = `Restart to apply v${status.version}`;
+    label = `Restart to update v${status.version}`;
     Icon = RotateCcw;
   } else if (status.status === 'installing') {
     progress = 100;
-    label = 'Launching installer';
+    label = 'Updating silently';
     Icon = RefreshCw;
   } else if (status.status === 'error') {
     label = 'Update failed — retry';

@@ -81,7 +81,7 @@ export class AutoUpdaterBridge {
         this.send({ status: 'error', message: 'The update installer did not start. You can keep working and retry the update.' });
       }, 25000);
       this.installResetTimer.unref?.();
-      setImmediate(() => autoUpdater.quitAndInstall(false, true));
+      setImmediate(() => autoUpdater.quitAndInstall(true, true));
     } catch (error) {
       this.clearInstallResetTimer();
       this.handleError(toError(error));
