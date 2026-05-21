@@ -1,7 +1,11 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
 import type { ExportOptions } from '@shared/models/Ipc';
 import type { Project } from '@shared/models/Project';
 import type { RecordedStep } from '@shared/models/Step';
+import { ImageOps } from '../capture/ImageOps';
+
+const imageOps = new ImageOps();
 
 export async function renderReportHtml(project: Project, options: ExportOptions): Promise<string> {
   const compact = options.format === 'HtmlCompact';
@@ -22,10 +26,15 @@ async function renderStep(step: RecordedStep, options: ExportOptions, compact: b
 
 async function imageTag(step: RecordedStep, options: ExportOptions): Promise<string> {
   if (options.embedImagesAsBase64) {
-    const bytes = await readFile(step.screenshotPath);
+    const bytes = await imageOps.renderExportImage(await readFile(step.screenshotPath), step.annotations ?? []);
     return `<img src="data:image/png;base64,${bytes.toString('base64')}" alt="${escapeHtml(step.description)}">`;
   }
-  return `<img src="${escapeAttribute(step.screenshotPath)}" alt="${escapeHtml(step.description)}">`;
+  const assetDirectory = join(dirname(options.outputPath), `${basename(options.outputPath, '.html')}-assets`);
+  await mkdir(assetDirectory, { recursive: true });
+  const imageName = `step-${step.stepNumber}-${basename(step.screenshotPath)}`;
+  const imagePath = join(assetDirectory, imageName);
+  await writeFile(imagePath, await imageOps.renderExportImage(await readFile(step.screenshotPath), step.annotations ?? []));
+  return `<img src="${escapeAttribute(join(basename(assetDirectory), imageName).replace(/\\/g, '/'))}" alt="${escapeHtml(step.description)}">`;
 }
 
 function metadata(project: Project, options: ExportOptions): string {

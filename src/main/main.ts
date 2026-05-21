@@ -62,7 +62,8 @@ function createEditorWindow(): void {
       preload: join(__dirname, '../preload/editor.js'),
       sandbox: false,
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      spellcheck: true
     }
   });
 

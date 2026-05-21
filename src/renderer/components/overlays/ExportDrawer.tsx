@@ -333,6 +333,7 @@ export function ExportDrawer() {
               <textarea
                 value={xrayText}
                 readOnly
+                spellCheck={false}
                 style={{
                   width: '100%',
                   height: 128,

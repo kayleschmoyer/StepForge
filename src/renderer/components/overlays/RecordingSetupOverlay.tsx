@@ -183,6 +183,7 @@ export function RecordingSetupOverlay() {
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Example: Verify user can upload evidence to a completed inspection"
             disabled={starting}
+            spellCheck
             style={{
               width: '100%',
               minHeight: 92,
@@ -206,6 +207,7 @@ export function RecordingSetupOverlay() {
               onChange={(event) => setVersion(event.target.value)}
               placeholder="Example: 2026.05.20 / 8.4.1"
               disabled={starting}
+              spellCheck={false}
               style={{
                 width: '100%',
                 height: 36,

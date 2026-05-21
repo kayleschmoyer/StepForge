@@ -91,6 +91,10 @@ export function registerIpc(context: IpcContext): void {
     context.engine.setProject(project);
     return project;
   });
+  ipcMain.handle(IPC.ProjectDeleteRecent, async (_, sessionDirectory: string): Promise<void> => {
+    if (context.engine.project?.sessionDirectory === sessionDirectory) context.engine.setProject(null);
+    await context.storage.deleteProject(sessionDirectory);
+  });
   ipcMain.handle(IPC.ProjectUpdateMetadata, async (_, payload: ProjectUpdateMetadataPayload) => {
     await context.engine.updateMetadata(payload.patch);
   });

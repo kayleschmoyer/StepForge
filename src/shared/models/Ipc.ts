@@ -23,6 +23,7 @@ export const IPC = {
   ProjectSave: 'project:save',
   ProjectCreate: 'project:create',
   ProjectOpenRecent: 'project:openRecent',
+  ProjectDeleteRecent: 'project:deleteRecent',
   ProjectUpdateMetadata: 'project:updateMetadata',
   ProjectListRecent: 'project:listRecent',
   ProjectChanged: 'project:changed',
@@ -217,6 +218,7 @@ export interface StepForgeBridge {
     save: () => Promise<void>;
     create: (payload: string | ProjectCreatePayload) => Promise<Project>;
     openRecent: (sessionDirectory: string) => Promise<Project>;
+    deleteRecent: (sessionDirectory: string) => Promise<void>;
     updateMetadata: (payload: ProjectUpdateMetadataPayload) => Promise<void>;
     listRecent: () => Promise<RecentProject[]>;
     onChanged: (cb: (project: Project) => void) => () => void;

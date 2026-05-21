@@ -223,11 +223,12 @@ function DescriptionSection({ step }: { step: RecordedStep }) {
 
   return (
     <InsSection label="Description">
-      <input value={desc} onChange={(e) => setDesc(e.target.value)} style={inputStyle} />
+      <input value={desc} onChange={(e) => setDesc(e.target.value)} spellCheck style={inputStyle} />
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="Add a note for this step…"
+        spellCheck
         style={textareaStyle}
       />
     </InsSection>
@@ -410,6 +411,7 @@ function ResultField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        spellCheck
         style={{
           width: '100%',
           minHeight: 68,

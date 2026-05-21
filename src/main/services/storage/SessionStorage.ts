@@ -2,7 +2,7 @@ import { app } from 'electron';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import writeFileAtomic from 'write-file-atomic';
 import type { AppSettings } from '@shared/models/AppSettings';
 import type { Project, RecentProject } from '@shared/models/Project';
@@ -99,6 +99,17 @@ export class SessionStorage {
         stepCount: project.steps.filter((step) => !step.isDeleted).length,
         lastSavedAt: project.lastSavedAt
       }));
+  }
+
+  async deleteProject(sessionDirectory: string): Promise<void> {
+    const root = resolve(await this.getSessionsRoot());
+    const target = resolve(sessionDirectory);
+    const pathFromRoot = relative(root, target);
+    const insideRoot = pathFromRoot && !pathFromRoot.startsWith('..') && !pathFromRoot.includes(':');
+    if (!insideRoot || !existsSync(this.sessionPath(target))) {
+      throw new Error('Cannot delete a session outside the StepForge sessions folder.');
+    }
+    await rm(target, { recursive: true, force: true });
   }
 
   async findRecoverableSession(): Promise<Project | null> {

@@ -28,6 +28,7 @@ const api: StepForgeBridge = {
     save: () => ipcRenderer.invoke(IPC.ProjectSave),
     create: (payload) => ipcRenderer.invoke(IPC.ProjectCreate, payload),
     openRecent: (sessionDirectory) => ipcRenderer.invoke(IPC.ProjectOpenRecent, sessionDirectory),
+    deleteRecent: (sessionDirectory) => ipcRenderer.invoke(IPC.ProjectDeleteRecent, sessionDirectory),
     updateMetadata: (payload) => ipcRenderer.invoke(IPC.ProjectUpdateMetadata, payload),
     listRecent: () => ipcRenderer.invoke(IPC.ProjectListRecent),
     onChanged: (cb) => subscribe(IPC.ProjectChanged, cb)

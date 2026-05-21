@@ -4,7 +4,8 @@ import {
   Folder,
   Upload,
   FileText,
-  History
+  History,
+  Trash2
 } from 'lucide-react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import type { AppInfo } from '@shared/models/Ipc';
@@ -61,6 +62,13 @@ export function HomeView() {
   const handleDismissRecovery = async () => {
     await window.stepForge.recovery.dismiss();
     setUnsavedRecovery(null);
+  };
+
+  const handleDeleteRecent = async (project: RecentProject) => {
+    const confirmed = window.confirm(`Delete this session permanently?\n\n${project.title}`);
+    if (!confirmed) return;
+    await window.stepForge.project.deleteRecent(project.sessionDirectory);
+    setRecentProjects(await window.stepForge.project.listRecent());
   };
 
   return (
@@ -304,6 +312,7 @@ export function HomeView() {
                   setProject(project);
                   setView('EDITOR');
                 }}
+                onDelete={() => void handleDeleteRecent(r)}
               />
             ))}
           </div>
@@ -492,10 +501,15 @@ function SecondaryCard({
   );
 }
 
-function RecentRow({ project, onClick }: { project: RecentProject; onClick: () => void }) {
+function RecentRow({ project, onClick, onDelete }: { project: RecentProject; onClick: () => void; onDelete: () => void }) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') onClick();
+      }}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -510,10 +524,10 @@ function RecentRow({ project, onClick }: { project: RecentProject; onClick: () =
         transition: 'border-color 0.18s'
       }}
       onMouseEnter={(e) =>
-        ((e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--ksr-border-2)')
+        ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--ksr-border-2)')
       }
       onMouseLeave={(e) =>
-        ((e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--ksr-border-0)')
+        ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--ksr-border-0)')
       }
     >
       <div
@@ -562,7 +576,30 @@ function RecentRow({ project, onClick }: { project: RecentProject; onClick: () =
       >
         {project.stepCount} steps
       </div>
-    </button>
+      <button
+        type="button"
+        title="Delete session"
+        onClick={(event) => {
+          event.stopPropagation();
+          onDelete();
+        }}
+        style={{
+          width: 30,
+          height: 30,
+          borderRadius: 7,
+          border: '1px solid var(--ksr-bug-border)',
+          background: 'var(--ksr-bug-bg)',
+          color: 'var(--ksr-bug-text)',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0
+        }}
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
   );
 }
 

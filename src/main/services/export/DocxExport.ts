@@ -19,12 +19,14 @@ import sharp from 'sharp';
 import type { ExportOptions, ExportResult } from '@shared/models/Ipc';
 import type { Project } from '@shared/models/Project';
 import type { RecordedStep } from '@shared/models/Step';
+import { ImageOps } from '../capture/ImageOps';
 
 const ACCENT = '0EA5E9';
 const INK = '172033';
 const MUTED = '64748B';
 const BORDER = 'DBE3EF';
 const SOFT = 'F8FAFC';
+const imageOps = new ImageOps();
 
 export async function exportDocx(project: Project, options: ExportOptions): Promise<ExportResult> {
   const steps = project.steps.filter((candidate) => options.includeDeletedSteps || !candidate.isDeleted);
@@ -166,7 +168,7 @@ async function stepTable(step: RecordedStep, options: ExportOptions): Promise<Ta
 
 async function screenshotParagraph(step: RecordedStep): Promise<Paragraph> {
   try {
-    const imageBytes = await readFile(step.screenshotPath);
+    const imageBytes = await imageOps.renderExportImage(await readFile(step.screenshotPath), step.annotations ?? []);
     const size = await imageSize(step.screenshotPath);
     return new Paragraph({
       spacing: { before: 120 },

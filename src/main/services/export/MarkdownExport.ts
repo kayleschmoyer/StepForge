@@ -1,7 +1,10 @@
-import { mkdir, copyFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import type { ExportOptions, ExportResult } from '@shared/models/Ipc';
 import type { Project } from '@shared/models/Project';
+import { ImageOps } from '../capture/ImageOps';
+
+const imageOps = new ImageOps();
 
 export async function exportMarkdown(project: Project, options: ExportOptions): Promise<ExportResult> {
   const imageDirectory = join(dirname(options.outputPath), `${basename(options.outputPath, '.md')}-images`);
@@ -19,7 +22,8 @@ export async function exportMarkdown(project: Project, options: ExportOptions): 
     lines.push(`### ${step.stepNumber}. ${step.description}`, '');
     if (options.includeScreenshots && step.screenshotPath) {
       const imageName = `${step.stepNumber}-${basename(step.screenshotPath)}`;
-      await copyFile(step.screenshotPath, join(imageDirectory, imageName));
+      const image = await imageOps.renderExportImage(await readFile(step.screenshotPath), step.annotations ?? []);
+      await writeFile(join(imageDirectory, imageName), image);
       lines.push(`![Step ${step.stepNumber}](${basename(imageDirectory)}/${imageName})`, '');
     }
     if (options.includeNotes && step.userNote) lines.push(`> ${step.userNote}`, '');
