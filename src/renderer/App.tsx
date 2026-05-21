@@ -27,6 +27,7 @@ export default function App() {
   const setSettings = useProjectStore((s) => s.setSettings);
   const setView = useProjectStore((s) => s.setView);
   const setRecState = useProjectStore((s) => s.setRecState);
+  const selectStep = useProjectStore((s) => s.selectStep);
   const project = useProjectStore((s) => s.project);
   const settings = useProjectStore((s) => s.settings);
 
@@ -51,13 +52,15 @@ export default function App() {
       setProject(nextProject);
       setView('EDITOR');
     });
+    const offStepAdded = window.stepForge.step.onAdded((step) => selectStep(step.id));
     const offRecording = window.stepForge.recording.onStateChanged(setRecState);
     return () => {
       offSettings();
       offProject();
+      offStepAdded();
       offRecording();
     };
-  }, [setProject, setSettings, setFirstRunSetupOpen, setView, setRecState, project]);
+  }, [setProject, setSettings, setFirstRunSetupOpen, setView, setRecState, selectStep, project]);
 
   // Global keymap
   useEffect(() => {

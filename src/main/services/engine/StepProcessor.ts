@@ -71,6 +71,31 @@ export class StepProcessor {
     };
   }
 
+  async createScreenshotStep(project: Project, image: Buffer, description: string): Promise<RecordedStep> {
+    const stepId = `step-${randomUUID()}`;
+    const png = await this.imageOps.toPng(image);
+    const thumbnail = await this.imageOps.thumbnail(png);
+    const screenshotPath = await this.imageStorage.saveScreenshot(project, stepId, png);
+    const thumbnailPath = await this.imageStorage.saveThumbnail(project, stepId, thumbnail);
+    return {
+      id: stepId,
+      stepNumber: project.nextStepNumber,
+      timestamp: new Date().toISOString(),
+      actionType: 'ManualNote',
+      description,
+      flags: [],
+      screenshotPath,
+      thumbnailPath,
+      keysPressed: '',
+      textEntered: '',
+      scrollDelta: 0,
+      scrolledDown: false,
+      isRedacted: false,
+      isDeleted: false,
+      annotations: []
+    };
+  }
+
   private actionType(event: InputEvent): ActionType {
     if (event.kind === 'wheel') return 'Scroll';
     if (event.kind === 'key') return event.shortcut ? 'KeyboardShortcut' : 'TextEntry';

@@ -1,4 +1,5 @@
-import { MousePointerClick, Keyboard, ArrowDown, ArrowRight, Plus, Bug, AlertTriangle } from 'lucide-react';
+import { MousePointerClick, Keyboard, ArrowDown, ArrowRight, Plus, Bug, AlertTriangle, ImagePlus } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import type { RecordedStep, ActionType } from '@shared/models/Step';
 
@@ -26,6 +27,14 @@ export function Timeline() {
   const selectStep = useProjectStore((s) => s.selectStep);
 
   const handleAddManual = () => void window.stepForge.step.addManual();
+  const handleAddScreenshot = async () => {
+    const sourcePath = await window.stepForge.dialog.openFile({
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'] }],
+      properties: ['openFile']
+    });
+    if (!sourcePath) return;
+    await window.stepForge.step.addScreenshot({ sourcePath });
+  };
 
   return (
     <div
@@ -51,27 +60,36 @@ export function Timeline() {
         />
       ))}
       <button
-        title="Add manual step"
+        title="Add manual note"
         onClick={handleAddManual}
-        style={{
-          width: 64,
-          height: 84,
-          flexShrink: 0,
-          borderRadius: 10,
-          background: 'transparent',
-          border: '1.5px dashed var(--ksr-border-1)',
-          color: 'var(--ksr-text-3)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
+        style={addButtonStyle}
       >
         <Plus size={18} />
+      </button>
+      <button
+        title="Add screenshot"
+        onClick={() => void handleAddScreenshot()}
+        style={addButtonStyle}
+      >
+        <ImagePlus size={18} />
       </button>
     </div>
   );
 }
+
+const addButtonStyle: CSSProperties = {
+  width: 64,
+  height: 84,
+  flexShrink: 0,
+  borderRadius: 10,
+  background: 'transparent',
+  border: '1.5px dashed var(--ksr-border-1)',
+  color: 'var(--ksr-text-3)',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+};
 
 function TimelineCard({
   step,

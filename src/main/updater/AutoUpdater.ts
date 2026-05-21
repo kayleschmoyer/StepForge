@@ -5,6 +5,7 @@ import { diagnostics } from '../services/diagnostics/DiagnosticsStore';
 
 export class AutoUpdaterBridge {
   private interval: NodeJS.Timeout | null = null;
+  private installResetTimer: NodeJS.Timeout | null = null;
 
   constructor(
     private editorProvider: () => BrowserWindow | null,
@@ -22,7 +23,11 @@ export class AutoUpdaterBridge {
     autoUpdater.on('update-downloaded', (info) => this.send({ status: 'downloaded', version: info.version }));
     autoUpdater.on('error', (error) => this.handleError(error));
     const updaterEvents = autoUpdater as unknown as { on: (eventName: 'before-quit-for-update', listener: () => void) => void };
-    updaterEvents.on('before-quit-for-update', () => diagnostics.record('info', 'updater', 'Quitting StepForge to install update.'));
+    updaterEvents.on('before-quit-for-update', () => {
+      this.clearInstallResetTimer();
+      diagnostics.record('info', 'updater', 'Quitting StepForge to install update.');
+      void this.prepareForInstall();
+    });
     setTimeout(() => void this.check(), 5000);
     this.interval = setInterval(() => void this.check(), 4 * 60 * 60 * 1000);
   }
@@ -46,7 +51,11 @@ export class AutoUpdaterBridge {
   }
 
   async download(): Promise<void> {
-    await autoUpdater.downloadUpdate();
+    try {
+      await autoUpdater.downloadUpdate();
+    } catch (error) {
+      this.handleError(toError(error));
+    }
   }
 
   async install(): Promise<void> {
@@ -57,9 +66,16 @@ export class AutoUpdaterBridge {
     this.send({ status: 'installing' });
     diagnostics.record('info', 'updater', 'Preparing to install downloaded update.');
     try {
-      await this.prepareForInstall();
+      this.clearInstallResetTimer();
+      this.installResetTimer = setTimeout(() => {
+        diagnostics.record('warning', 'updater', 'Update installer did not start before the timeout.');
+        this.installResetTimer = null;
+        this.send({ status: 'error', message: 'The update installer did not start. You can keep working and retry the update.' });
+      }, 25000);
+      this.installResetTimer.unref?.();
       setImmediate(() => autoUpdater.quitAndInstall(false, true));
     } catch (error) {
+      this.clearInstallResetTimer();
       this.handleError(toError(error));
     }
   }
@@ -71,11 +87,18 @@ export class AutoUpdaterBridge {
   }
 
   private handleError(error: Error): void {
+    this.clearInstallResetTimer();
     if (isNoPublishedUpdateError(error)) {
       this.send({ status: 'not-available' });
       return;
     }
     this.send({ status: 'error', message: error.message });
+  }
+
+  private clearInstallResetTimer(): void {
+    if (!this.installResetTimer) return;
+    clearTimeout(this.installResetTimer);
+    this.installResetTimer = null;
   }
 }
 

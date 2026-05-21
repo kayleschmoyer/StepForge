@@ -170,6 +170,12 @@ export class RecordingEngine extends EventEmitter {
     await this.appendStep(step);
   }
 
+  async addScreenshotStep(image: Buffer, description: string): Promise<void> {
+    if (!this.activeProject) this.activeProject = await this.storage.createProject('Manual session');
+    const step = await this.processor.createScreenshotStep(this.activeProject, image, description);
+    await this.appendStep(step);
+  }
+
   async toggleFlag(id: string, flag: StepFlag): Promise<void> {
     await this.mutateSteps((steps) => steps.map((step) => {
       if (step.id !== id) return step;

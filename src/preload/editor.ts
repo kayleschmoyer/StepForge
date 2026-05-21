@@ -39,6 +39,7 @@ const api: StepForgeBridge = {
     duplicate: (id) => ipcRenderer.invoke(IPC.StepDuplicate, id),
     delete: (id) => ipcRenderer.invoke(IPC.StepDelete, id),
     addManual: () => ipcRenderer.invoke(IPC.StepAddManual),
+    addScreenshot: (payload) => ipcRenderer.invoke(IPC.StepAddScreenshot, payload),
     toggleFlag: (payload) => ipcRenderer.invoke(IPC.StepToggleFlag, payload),
     setAnnotations: (payload) => ipcRenderer.invoke(IPC.StepSetAnnotations, payload),
     onAdded: (cb) => subscribe(IPC.StepAdded, cb)

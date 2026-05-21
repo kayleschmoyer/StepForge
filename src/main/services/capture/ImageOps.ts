@@ -6,6 +6,10 @@ export class ImageOps {
     return sharp(png).resize({ width: 320, withoutEnlargement: true }).png().toBuffer();
   }
 
+  async toPng(image: Buffer): Promise<Buffer> {
+    return sharp(image).png().toBuffer();
+  }
+
   async applyClickHighlight(png: Buffer, x: number, y: number, radius: number): Promise<Buffer> {
     const diameter = radius * 2;
     const overlay = Buffer.from(`<svg width="${diameter}" height="${diameter}" xmlns="http://www.w3.org/2000/svg"><circle cx="${radius}" cy="${radius}" r="${radius - 2}" fill="none" stroke="#ff3b30" stroke-width="4"/><circle cx="${radius}" cy="${radius}" r="4" fill="#ff3b30"/></svg>`);

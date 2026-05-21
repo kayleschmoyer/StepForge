@@ -34,6 +34,7 @@ export const IPC = {
   StepDuplicate: 'step:duplicate',
   StepDelete: 'step:delete',
   StepAddManual: 'step:addManual',
+  StepAddScreenshot: 'step:addScreenshot',
   StepToggleFlag: 'step:toggleFlag',
   StepSetAnnotations: 'step:setAnnotations',
   StepAdded: 'step:added',
@@ -163,6 +164,12 @@ export interface StepUpdatePayload {
   patch: Partial<RecordedStep>;
 }
 
+export interface StepAddScreenshotPayload {
+  sourcePath?: string;
+  imageBytes?: ArrayBuffer;
+  description?: string;
+}
+
 export interface StepReorderPayload {
   id: string;
   direction: 'up' | 'down';
@@ -229,6 +236,7 @@ export interface StepForgeBridge {
     duplicate: (id: string) => Promise<void>;
     delete: (id: string) => Promise<void>;
     addManual: () => Promise<void>;
+    addScreenshot: (payload: StepAddScreenshotPayload) => Promise<void>;
     toggleFlag: (payload: StepToggleFlagPayload) => Promise<void>;
     setAnnotations: (payload: StepSetAnnotationsPayload) => Promise<void>;
     onAdded: (cb: (step: RecordedStep) => void) => () => void;

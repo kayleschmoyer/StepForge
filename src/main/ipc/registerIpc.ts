@@ -5,8 +5,8 @@ import {
   ipcMain,
   shell
 } from 'electron';
-import { join } from 'node:path';
-import { stat } from 'node:fs/promises';
+import { basename, join } from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
 import {
   IPC,
   type DiagnosticEntry,
@@ -15,6 +15,7 @@ import {
   type ProjectCreatePayload,
   type ProjectUpdateMetadataPayload,
   type RecoveryInfo,
+  type StepAddScreenshotPayload,
   type StepReorderPayload,
   type StepSetAnnotationsPayload,
   type StepToggleFlagPayload,
@@ -107,6 +108,16 @@ export function registerIpc(context: IpcContext): void {
   ipcMain.handle(IPC.StepDuplicate, async (_, id: string) => context.engine.duplicateStep(id));
   ipcMain.handle(IPC.StepDelete, async (_, id: string) => context.engine.deleteStep(id));
   ipcMain.handle(IPC.StepAddManual, async () => context.engine.addManualStep());
+  ipcMain.handle(IPC.StepAddScreenshot, async (_, payload: StepAddScreenshotPayload) => {
+    const image = payload.imageBytes
+      ? Buffer.from(new Uint8Array(payload.imageBytes))
+      : payload.sourcePath
+        ? await readFile(payload.sourcePath)
+        : null;
+    if (!image) throw new Error('No screenshot was provided.');
+    const description = payload.description ?? (payload.sourcePath ? `Screenshot: ${basename(payload.sourcePath)}` : 'Pasted screenshot');
+    await context.engine.addScreenshotStep(image, description);
+  });
   ipcMain.handle(IPC.StepToggleFlag, async (_, payload: StepToggleFlagPayload) => context.engine.toggleFlag(payload.id, payload.flag));
   ipcMain.handle(
     IPC.StepSetAnnotations,
