@@ -13,6 +13,7 @@ import { FirstRunSetupOverlay } from './components/overlays/FirstRunSetupOverlay
 import { DiagnosticsOverlay } from './components/overlays/DiagnosticsOverlay';
 import { useProjectStore } from './state/projectStore';
 import { MOCK_PROJECT } from './state/mockSeed';
+import { applySettingsAppearance } from './services/theme';
 
 export default function App() {
   const view = useProjectStore((s) => s.view);
@@ -27,11 +28,17 @@ export default function App() {
   const setView = useProjectStore((s) => s.setView);
   const setRecState = useProjectStore((s) => s.setRecState);
   const project = useProjectStore((s) => s.project);
+  const settings = useProjectStore((s) => s.settings);
+
+  useEffect(() => {
+    applySettingsAppearance(settings);
+  }, [settings]);
 
   // Bootstrap: load settings, seed mock project in dev when nothing is loaded.
   useEffect(() => {
     void window.stepForge.settings.get().then((settings) => {
       setSettings(settings);
+      applySettingsAppearance(settings);
       if (!settings.firstRunSetupComplete) setFirstRunSetupOpen(true);
     });
 

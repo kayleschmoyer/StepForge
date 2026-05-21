@@ -5,15 +5,17 @@ import {
   Settings as SettingsIcon,
   FileText,
   CircleHelp,
-  Search
+  Search,
+  Check
 } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
-import { defaultAppSettings, type AppSettings } from '@shared/models/AppSettings';
+import { accentColorPresets, defaultAppSettings, type AppSettings } from '@shared/models/AppSettings';
 import type { AppInfo } from '@shared/models/Ipc';
 import { BrandMark } from '../ui/BrandMark';
+import { setAccentColor } from '@renderer/services/theme';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 type Section = 'capture' | 'app' | 'defaults' | 'about';
 
@@ -230,7 +232,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (next: boolean) => vo
         border: on ? 'none' : '1px solid var(--ksr-border-1)',
         position: 'relative',
         cursor: 'pointer',
-        boxShadow: on ? `0 0 12px ${ACCENT}40` : 'none',
+        boxShadow: on ? 'var(--ksr-acc-shadow-sm)' : 'none',
         transition: 'background 0.16s'
       }}
     >
@@ -417,6 +419,15 @@ function AppSection({
           }}
         />
       </Row>
+      <Row label="App color" sub="Choose the accent used for buttons, tabs, highlights, and active states.">
+        <AccentPresetPicker
+          value={settings.accentColor}
+          onChange={(accentColor) => {
+            setAccentColor(accentColor);
+            patch({ accentColor });
+          }}
+        />
+      </Row>
       <Row label="Minimize to system tray during recording">
         <Toggle
           on={settings.minimizeToTrayDuringRecording}
@@ -451,6 +462,51 @@ function AppSection({
         />
       </Row>
     </>
+  );
+}
+
+function AccentPresetPicker({
+  value,
+  onChange
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 32px)',
+        gap: 8
+      }}
+    >
+      {accentColorPresets.map((preset) => {
+        const active = preset.value.toLowerCase() === value.toLowerCase();
+        return (
+          <button
+            key={preset.id}
+            type="button"
+            title={preset.name}
+            aria-label={preset.name}
+            onClick={() => onChange(preset.value)}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: active ? '2px solid var(--ksr-text-0)' : '1px solid var(--ksr-border-1)',
+              background: preset.value,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: active ? `0 0 0 3px ${preset.value}33` : 'none'
+            }}
+          >
+            {active && <Check size={15} color="#fff" strokeWidth={3} />}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

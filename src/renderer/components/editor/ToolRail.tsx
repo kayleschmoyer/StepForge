@@ -10,7 +10,7 @@ import {
 import type { ComponentType } from 'react';
 import { useProjectStore, type AnnotationTool } from '@renderer/state/projectStore';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 interface ToolDef {
   id: AnnotationTool;

@@ -12,7 +12,7 @@ import type { ComponentType, ReactNode } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import type { RecordedStep, StepFlag } from '@shared/models/Step';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 export function Inspector() {
   const step = useProjectStore((s) =>
@@ -95,7 +95,11 @@ function InspectorHeader({ step }: { step: RecordedStep }) {
           justifyContent: 'center',
           fontWeight: 800,
           fontSize: 13,
-          boxShadow: `0 0 0 3px ${typeof flagColor === 'string' ? flagColor : '#00c4ff'}28`
+          boxShadow: step.flags.includes('Bug')
+            ? '0 0 0 3px var(--ksr-bug-bg)'
+            : step.flags.includes('Important')
+              ? '0 0 0 3px var(--ksr-imp-bg)'
+              : '0 0 0 3px var(--ksr-acc-soft)'
         }}
       >
         {step.stepNumber}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pause, Play, Square, X, MousePointerClick } from 'lucide-react';
 import { formatElapsed } from '@shared/util/time';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 type RecState = 'IDLE' | 'RECORDING' | 'PAUSED' | 'STOPPED';
 
@@ -183,7 +183,7 @@ function HudBtn({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: primary ? `0 0 14px ${accent || ACCENT}40` : 'none'
+        boxShadow: primary ? 'var(--ksr-acc-shadow-sm)' : 'none'
       }}
     >
       <Icon size={14} fill={primary ? 'currentColor' : 'none'} />

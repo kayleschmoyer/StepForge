@@ -4,7 +4,7 @@ import type { DiagnosticEntry } from '@shared/models/Ipc';
 import { formatClock } from '@shared/util/time';
 import { useProjectStore } from '@renderer/state/projectStore';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 export function DiagnosticsOverlay() {
   const open = useProjectStore((state) => state.diagnosticsOpen);

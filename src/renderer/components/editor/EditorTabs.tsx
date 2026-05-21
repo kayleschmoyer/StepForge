@@ -1,7 +1,7 @@
 import { Edit, Eye, Download } from 'lucide-react';
 import { useProjectStore, type EditorTab } from '@renderer/state/projectStore';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 const TABS: { id: EditorTab; label: string; Icon: typeof Edit }[] = [
   { id: 'edit', label: 'Edit Steps', Icon: Edit },
@@ -71,7 +71,7 @@ export function EditorTabs() {
           fontWeight: 700,
           fontFamily: 'var(--ksr-font-sans)',
           letterSpacing: 'var(--ksr-track-snug)',
-          boxShadow: `0 0 0 1px ${ACCENT}, 0 6px 18px ${ACCENT}25`
+          boxShadow: '0 0 0 1px var(--ksr-acc), var(--ksr-acc-shadow-md)'
         }}
       >
         <Download size={13} /> Export Report

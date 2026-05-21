@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, FolderOpen, UserRound } from 'lucide-react';
 import { useProjectStore } from '@renderer/state/projectStore';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 export function FirstRunSetupOverlay() {
   const open = useProjectStore((state) => state.firstRunSetupOpen);

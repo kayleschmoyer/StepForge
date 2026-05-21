@@ -13,7 +13,7 @@ import type { RecentProject } from '@shared/models/Project';
 import { timeOfDayGreeting, formatTimestampLong } from '@shared/util/time';
 import { startRecordingWithDetails } from '@renderer/services/startRecordingWithDetails';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 export function HomeView() {
   const recovery = useProjectStore((s) => s.unsavedRecovery);
@@ -91,7 +91,7 @@ export function HomeView() {
           width: 400,
           height: 400,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${ACCENT}22, transparent 70%)`,
+          background: 'radial-gradient(circle, rgba(var(--ksr-acc-rgb),0.13), transparent 70%)',
           pointerEvents: 'none',
           filter: 'blur(40px)'
         }}
@@ -349,7 +349,7 @@ function PrimaryCard({ onClick }: { onClick: () => void }) {
         background: 'linear-gradient(135deg, var(--ksr-surf-1) 0%, var(--ksr-surf-0) 100%)',
         border: `1px solid ${hover ? 'var(--ksr-acc-border)' : 'var(--ksr-border-0)'}`,
         boxShadow: hover
-          ? `0 12px 36px ${ACCENT}22, 0 0 0 4px ${ACCENT}10`
+          ? 'var(--ksr-acc-shadow-lg)'
           : '0 4px 12px rgba(0,0,0,0.3)',
         transition: 'border-color 0.18s, box-shadow 0.18s',
         position: 'relative',
@@ -366,7 +366,7 @@ function PrimaryCard({ onClick }: { onClick: () => void }) {
           width: 200,
           height: 200,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${ACCENT}30, transparent 70%)`,
+          background: 'radial-gradient(circle, rgba(var(--ksr-acc-rgb),0.18), transparent 70%)',
           filter: 'blur(20px)',
           pointerEvents: 'none'
         }}
@@ -382,7 +382,7 @@ function PrimaryCard({ onClick }: { onClick: () => void }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 0 32px ${ACCENT}60`,
+          boxShadow: 'var(--ksr-acc-glow)',
           position: 'relative'
         }}
       >
@@ -626,7 +626,7 @@ function PillButton({
         background: isPrimary ? ACCENT : 'transparent',
         color: isPrimary ? 'var(--ksr-text-inverse)' : 'var(--ksr-imp-text)',
         border: isPrimary ? 'none' : '1px solid var(--ksr-imp-border)',
-        boxShadow: isPrimary ? `0 0 16px ${ACCENT}40` : 'none'
+        boxShadow: isPrimary ? 'var(--ksr-acc-shadow-md)' : 'none'
       }}
     >
       {children}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Download, ArrowDown, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useProjectStore } from '@renderer/state/projectStore';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 export function UpdateBanner() {
   const status = useProjectStore((s) => s.updateStatus);

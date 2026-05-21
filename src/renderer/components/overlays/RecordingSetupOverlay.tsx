@@ -3,7 +3,7 @@ import { CircleDot, X } from 'lucide-react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import { beginRecordingWithDetails, normalizeJiraKey } from '@renderer/services/startRecordingWithDetails';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 export function RecordingSetupOverlay() {
   const open = useProjectStore((state) => state.recordingSetupOpen);

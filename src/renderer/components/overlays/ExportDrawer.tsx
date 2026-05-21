@@ -6,7 +6,7 @@ import { defaultExportOptions, type ExportFormat } from '@shared/models/Ipc';
 import type { Project } from '@shared/models/Project';
 import { ReportPreview } from '../editor/ReportPreview';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 interface FormatDef {
   id: ExportFormat;
@@ -467,7 +467,7 @@ export function ExportDrawer() {
                 cursor: phase === 'exporting' ? 'wait' : 'pointer',
                 background: phase === 'exporting' ? 'var(--ksr-surf-2)' : ACCENT,
                 color: phase === 'exporting' ? 'var(--ksr-text-2)' : 'var(--ksr-text-inverse)',
-                boxShadow: phase === 'exporting' ? 'none' : `0 0 20px ${ACCENT}40`
+                boxShadow: phase === 'exporting' ? 'none' : 'var(--ksr-acc-shadow-md)'
               }}
             >
               {phase === 'exporting' ? <Spinner /> : <Download size={13} />}
@@ -531,7 +531,7 @@ function CheckRow({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: on ? `0 0 10px ${ACCENT}50` : 'none'
+          boxShadow: on ? 'var(--ksr-acc-shadow-sm)' : 'none'
         }}
       >
         {on && <Check size={11} color="var(--ksr-text-inverse)" strokeWidth={3} />}

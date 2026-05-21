@@ -18,7 +18,7 @@ import type { ComponentType } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import { startRecordingWithDetails } from '@renderer/services/startRecordingWithDetails';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 type Group = 'Recording' | 'Project' | 'Step' | 'App';
 

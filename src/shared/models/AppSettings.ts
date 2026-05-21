@@ -5,6 +5,25 @@
 
 export type Theme = 'dark' | 'light';
 
+export interface AccentColorPreset {
+  id: string;
+  name: string;
+  value: string;
+}
+
+export const accentColorPresets: AccentColorPreset[] = [
+  { id: 'electric-cyan', name: 'Electric Cyan', value: '#00c4ff' },
+  { id: 'ocean-blue', name: 'Ocean Blue', value: '#0ea5e9' },
+  { id: 'modern-indigo', name: 'Modern Indigo', value: '#6366f1' },
+  { id: 'soft-violet', name: 'Soft Violet', value: '#8b5cf6' },
+  { id: 'fresh-teal', name: 'Fresh Teal', value: '#14b8a6' },
+  { id: 'emerald', name: 'Emerald', value: '#10b981' },
+  { id: 'citrus', name: 'Citrus', value: '#84cc16' },
+  { id: 'warm-amber', name: 'Warm Amber', value: '#f59e0b' },
+  { id: 'coral', name: 'Coral', value: '#f97316' },
+  { id: 'rose', name: 'Rose', value: '#f43f5e' }
+];
+
 export interface AppSettings {
   // Capture
   captureDelayMs: number;
@@ -57,7 +76,7 @@ export const defaultAppSettings: AppSettings = {
 
   darkMode: true,
   theme: 'dark',
-  accentColor: '#00c4ff',
+  accentColor: accentColorPresets[0].value,
   minimizeOnRecord: true,
   minimizeToTrayDuringRecording: false,
   showInTrayOnStartup: true,

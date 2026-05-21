@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Camera } from 'lucide-react';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 interface ToastItem {
   id: number;
@@ -51,7 +51,7 @@ export function CapturedToast() {
             background: 'rgba(10,13,20,0.92)',
             backdropFilter: 'blur(20px)',
             border: '1px solid var(--ksr-acc-border)',
-            boxShadow: `0 10px 30px rgba(0,0,0,0.4), 0 0 0 1px ${ACCENT}30`,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.4), 0 0 0 1px var(--ksr-acc-border)',
             animation: 'toast-in 0.3s ease'
           }}
         >

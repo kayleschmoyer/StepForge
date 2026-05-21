@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import { ReportPreview } from './ReportPreview';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 export function PreviewTab() {
   const project = useProjectStore((s) => s.project);

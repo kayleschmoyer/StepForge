@@ -2,7 +2,7 @@ import { MousePointerClick, Keyboard, ArrowDown, ArrowRight, Plus, Bug, AlertTri
 import { useProjectStore } from '@renderer/state/projectStore';
 import type { RecordedStep, ActionType } from '@shared/models/Step';
 
-const ACCENT = '#00c4ff';
+const ACCENT = 'var(--ksr-acc)';
 
 const ACTION_ICON: Record<ActionType, typeof MousePointerClick> = {
   LeftClick: MousePointerClick,
