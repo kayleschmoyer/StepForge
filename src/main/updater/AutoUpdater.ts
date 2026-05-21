@@ -9,9 +9,12 @@ export class AutoUpdaterBridge {
   private checking = false;
   private downloading = false;
 
+  private pendingInstall = false;
+
   constructor(
     private editorProvider: () => BrowserWindow | null,
-    private prepareForInstall: () => Promise<void> | void = () => undefined
+    private prepareForInstall: () => Promise<void> | void = () => undefined,
+    private isBusy: () => boolean = () => false
   ) {
     autoUpdater.autoDownload = false;
     autoUpdater.logger = null;
@@ -25,7 +28,11 @@ export class AutoUpdaterBridge {
     });
     autoUpdater.on('update-not-available', () => this.send({ status: 'not-available' }));
     autoUpdater.on('download-progress', (progress) => this.send({ status: 'downloading', percent: progress.percent, bytesPerSecond: progress.bytesPerSecond }));
-    autoUpdater.on('update-downloaded', (info) => this.send({ status: 'downloaded', version: info.version }));
+    autoUpdater.on('update-downloaded', (info) => {
+      this.send({ status: 'downloaded', version: info.version });
+      this.pendingInstall = true;
+      this.tryAutoInstall();
+    });
     autoUpdater.on('error', (error) => this.handleError(error));
     const updaterEvents = autoUpdater as unknown as { on: (eventName: 'before-quit-for-update', listener: () => void) => void };
     updaterEvents.on('before-quit-for-update', () => {
@@ -34,7 +41,16 @@ export class AutoUpdaterBridge {
       void this.prepareForInstall();
     });
     void this.check();
-    this.interval = setInterval(() => void this.check(), 4 * 60 * 60 * 1000);
+    // Poll more often so an already-open app picks up new releases quickly.
+    this.interval = setInterval(() => void this.check(), 10 * 60 * 1000);
+  }
+
+  /** Try to silently install a pending downloaded update if the app is idle. */
+  tryAutoInstall(): void {
+    if (!this.pendingInstall) return;
+    if (this.isBusy()) return;
+    this.pendingInstall = false;
+    void this.install();
   }
 
   stop(): void {

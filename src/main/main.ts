@@ -35,7 +35,11 @@ const hooks = new InputHookService();
 const processor = new StepProcessor(captureService, imageOps, imageStorage, windowTracker);
 const engine = new RecordingEngine(storage, hooks, processor, () => settings.load(), () => editorWindow, stepForgeWindowBounds);
 const exporter = new ExportService();
-const updater = new AutoUpdaterBridge(() => editorWindow, prepareForUpdateInstall);
+const updater = new AutoUpdaterBridge(
+  () => editorWindow,
+  prepareForUpdateInstall,
+  () => engine.project?.state === 'RECORDING' || engine.project?.state === 'PAUSED'
+);
 let trayMenu: TrayMenu | null = null;
 
 function prepareForUpdateInstall(): void {
@@ -103,6 +107,10 @@ function createEditorWindow(): void {
     editorWindow = null;
   });
 
+  editorWindow.on('focus', () => {
+    void updater.check();
+  });
+
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
     editorWindow.loadURL(process.env['ELECTRON_RENDERER_URL'] + '/index.html');
   } else {
@@ -168,6 +176,7 @@ function wireEngineEvents(): void {
     trayMenu?.setState(state);
     if (state === 'RECORDING' || state === 'PAUSED') hudWindow?.show();
     else hudWindow?.hide();
+    if (state === 'STOPPED' || state === 'IDLE') updater.tryAutoInstall();
   });
   engine.on('tick', (seconds) => hudWindow?.updateTimer(seconds));
 }
