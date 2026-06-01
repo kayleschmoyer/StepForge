@@ -42,8 +42,8 @@ function metadata(project: Project, options: ExportOptions): string {
   const items = [
     ['VAST / Jira', project.metadata.jiraKey || '-'],
     ['Tester', project.metadata.tester],
+    ['Machine Tested On', project.metadata.machineTestedOn],
     ['Version', project.metadata.build],
-    ['Environment', project.metadata.env],
     ['Priority', project.metadata.priority]
   ];
   return `<div class="meta">${items.map(([label, value]) => `<div><b>${escapeHtml(label)}</b><span>${escapeHtml(value || '-')}</span></div>`).join('')}</div>`;

@@ -11,8 +11,8 @@ export async function exportMarkdown(project: Project, options: ExportOptions): 
   if (options.includeScreenshots) await mkdir(imageDirectory, { recursive: true });
   const lines: string[] = [`# ${project.metadata.title}`, ''];
   if (options.includeMetadata) {
+    lines.push(`- Machine tested on: ${project.metadata.machineTestedOn || '-'}`);
     lines.push(`- Version: ${project.metadata.build || '-'}`);
-    lines.push(`- Environment: ${project.metadata.env || '-'}`);
     lines.push(`- Priority: ${project.metadata.priority || '-'}`, '');
   }
   if (project.metadata.expected) lines.push('## Expected', project.metadata.expected, '');

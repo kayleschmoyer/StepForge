@@ -529,12 +529,6 @@ function DefaultsSection({
           onChange={(v) => patch({ defaultTesterName: v })}
         />
       </Row>
-      <Row label="Default environment">
-        <TextInput
-          value={settings.defaultEnvironment}
-          onChange={(v) => patch({ defaultEnvironment: v })}
-        />
-      </Row>
       <Row label="Default priority">
         <TextInput
           value={settings.defaultPriority}

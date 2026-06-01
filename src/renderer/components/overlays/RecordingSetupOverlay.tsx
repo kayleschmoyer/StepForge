@@ -10,6 +10,7 @@ export function RecordingSetupOverlay() {
   const setOpen = useProjectStore((state) => state.setRecordingSetupOpen);
   const [jiraNumber, setJiraNumber] = useState('');
   const [description, setDescription] = useState('');
+  const [machineTestedOn, setMachineTestedOn] = useState('');
   const [version, setVersion] = useState('');
   const [starting, setStarting] = useState(false);
   const jiraRef = useRef<HTMLInputElement | null>(null);
@@ -18,6 +19,7 @@ export function RecordingSetupOverlay() {
     if (!open) return;
     setJiraNumber('');
     setDescription('');
+    setMachineTestedOn('');
     setVersion('');
     setStarting(false);
     const timer = window.setTimeout(() => jiraRef.current?.focus(), 40);
@@ -43,7 +45,7 @@ export function RecordingSetupOverlay() {
     if (!canStart) return;
     setStarting(true);
     try {
-      await beginRecordingWithDetails(jiraNumber, description, version);
+      await beginRecordingWithDetails(jiraNumber, description, machineTestedOn, version);
       setOpen(false);
     } finally {
       setStarting(false);
@@ -201,11 +203,34 @@ export function RecordingSetupOverlay() {
           />
 
           <div style={{ marginTop: 14 }}>
+            <FieldLabel>Machine tested on</FieldLabel>
+            <input
+              value={machineTestedOn}
+              onChange={(event) => setMachineTestedOn(event.target.value)}
+              placeholder="Example: QA-VM-WIN11 / Laptop 4"
+              disabled={starting}
+              spellCheck={false}
+              style={{
+                width: '100%',
+                height: 36,
+                borderRadius: 7,
+                border: '1px solid var(--ksr-border-1)',
+                background: 'var(--ksr-surf-1)',
+                color: 'var(--ksr-text-0)',
+                fontFamily: 'var(--ksr-font-sans)',
+                fontSize: 13,
+                outline: 'none',
+                padding: '0 11px'
+              }}
+            />
+          </div>
+
+          <div style={{ marginTop: 14 }}>
             <FieldLabel>Version</FieldLabel>
             <input
               value={version}
               onChange={(event) => setVersion(event.target.value)}
-              placeholder="Example: 2026.05.20 / 8.4.1"
+              placeholder="Example: 9.0 Patch 680"
               disabled={starting}
               spellCheck={false}
               style={{

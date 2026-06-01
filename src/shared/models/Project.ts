@@ -7,8 +7,8 @@ export interface SessionMetadata {
   jiraKey?: string;
   app: string;
   build: string;
+  machineTestedOn: string;
   tester: string;
-  env: string;
   priority: 'Critical' | 'High' | 'Medium' | 'Low' | string;
   expected: string;
   actual: string;

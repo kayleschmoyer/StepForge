@@ -49,7 +49,6 @@ export interface AppSettings {
   // Defaults
   firstRunSetupComplete: boolean;
   defaultTesterName: string;
-  defaultEnvironment: string;
   defaultPriority: string;
   sessionStoragePath: string;
   excludedProcesses: string[];
@@ -86,7 +85,6 @@ export const defaultAppSettings: AppSettings = {
 
   firstRunSetupComplete: false,
   defaultTesterName: '',
-  defaultEnvironment: 'Production',
   defaultPriority: 'Medium',
   sessionStoragePath: '',
   excludedProcesses: ['StepForge.exe', 'KaylesStepsRecorder.exe', '1Password.exe', 'KeePass.exe', 'LastPass.exe'],

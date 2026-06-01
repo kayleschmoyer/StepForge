@@ -40,8 +40,8 @@ export class SessionStorage {
         jiraKey: '',
         app: '',
         build: '',
+        machineTestedOn: '',
         tester: settings.defaultTesterName,
-        env: settings.defaultEnvironment,
         priority: settings.defaultPriority,
         expected: '',
         actual: '',
@@ -70,7 +70,7 @@ export class SessionStorage {
 
   async loadProject(sessionDirectory: string): Promise<Project> {
     const raw = await readFile(this.sessionPath(sessionDirectory), 'utf-8');
-    return JSON.parse(raw) as Project;
+    return normalizeProject(JSON.parse(raw) as LegacyProject);
   }
 
   async listRecent(limit = 8): Promise<RecentProject[]> {
@@ -184,6 +184,24 @@ export class SessionStorage {
     const folderName = cleanTitle ? `${cleanJira} - ${cleanTitle}` : cleanJira;
     return folderName.slice(0, 140).trim() || sessionId;
   }
+}
+
+type LegacyProject = Project & {
+  metadata: Project['metadata'] & {
+    env?: string;
+    machineTestedOn?: string;
+  };
+};
+
+function normalizeProject(project: LegacyProject): Project {
+  const { env, ...metadata } = project.metadata;
+  return {
+    ...project,
+    metadata: {
+      ...metadata,
+      machineTestedOn: metadata.machineTestedOn ?? env ?? ''
+    }
+  };
 }
 
 function sanitizePathPart(value: string): string {

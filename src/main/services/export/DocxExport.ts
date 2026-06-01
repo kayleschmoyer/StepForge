@@ -82,8 +82,8 @@ function metadataTable(project: Project, stepCount: number): Table {
   const items: Array<[string, string]> = [
     ['VAST / Jira', project.metadata.jiraKey || '-'],
     ['Tester', project.metadata.tester || '-'],
+    ['Machine Tested On', project.metadata.machineTestedOn || '-'],
     ['Version', project.metadata.build || '-'],
-    ['Environment', project.metadata.env || '-'],
     ['Priority', project.metadata.priority || '-'],
     ['Captured Steps', String(stepCount)]
   ];

@@ -58,8 +58,8 @@ export const MOCK_PROJECT: Project = {
     jiraKey: 'VAST-1234',
     app: 'Acme Portal',
     build: '2026.05-rc.3 / 8.4.1',
+    machineTestedOn: 'QA-VM-WIN11',
     tester: 'Kayle Schmoyer',
-    env: 'Staging — us-east-1',
     priority: 'High',
     expected: 'Submitting the sign-in form with a 64-character username should authenticate and route to the dashboard within 2 seconds.',
     actual:

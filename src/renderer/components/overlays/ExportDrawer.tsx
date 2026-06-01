@@ -583,7 +583,7 @@ function buildXrayText(project: Project): string {
   const lines = [
     `Title: ${meta.jiraKey ? `${meta.jiraKey} - ` : ''}${meta.title || 'QA Session Report'}`,
     `Tester: ${meta.tester || '-'}`,
-    `Environment: ${meta.env || '-'}`,
+    `Machine tested on: ${meta.machineTestedOn || '-'}`,
     `Version: ${meta.build || '-'}`,
     '',
     'Expected:',

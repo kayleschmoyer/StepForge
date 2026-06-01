@@ -150,6 +150,7 @@ function SummaryStrip({
   compact: boolean;
 }) {
   const items: [string, string][] = [
+    ['Machine', meta.machineTestedOn || '-'],
     ['Version', meta.build || '-'],
     ['Priority', meta.priority || '-'],
     ['Tester', meta.tester || '-'],
@@ -160,7 +161,7 @@ function SummaryStrip({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: compact ? '1fr 1fr' : 'repeat(5, 1fr)',
+        gridTemplateColumns: compact ? '1fr 1fr' : 'repeat(6, 1fr)',
         gap: 1,
         overflow: 'hidden',
         borderRadius: 8,
