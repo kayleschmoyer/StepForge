@@ -6,7 +6,9 @@ import {
   Copy,
   ArrowUp,
   ArrowDown,
-  Trash2
+  Trash2,
+  Globe2,
+  AppWindow
 } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
@@ -56,6 +58,7 @@ export function Inspector() {
     >
       <InspectorHeader step={step} />
       <DescriptionSection step={step} />
+      {step.appContext && <ContextSection step={step} />}
       <FlagsSection step={step} />
       {(step.flags.includes('Bug') || step.userNote) && (
         <ExpectedActualSection step={step} expected={project.metadata.expected} actual={project.metadata.actual} />
@@ -63,6 +66,51 @@ export function Inspector() {
       {step.warnings && step.warnings.length > 0 && <WarningsSection step={step} />}
       <ActionFooter step={step} />
     </aside>
+  );
+}
+
+function ContextSection({ step }: { step: RecordedStep }) {
+  const context = step.appContext;
+  if (!context) return null;
+  const rows = [
+    ['App', context.appName],
+    ['Page', context.pageTitle],
+    ['URL', context.url],
+    ['Host', context.host],
+    ['Window', context.windowTitle],
+    ['Process', context.processName],
+    ['Confidence', context.confidence]
+  ].filter(([, value]) => Boolean(value));
+
+  return (
+    <InsSection label="App Context">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 10px',
+          borderRadius: 8,
+          background: 'var(--ksr-acc-soft)',
+          border: '1px solid var(--ksr-acc-border)',
+          color: ACCENT,
+          fontSize: 12,
+          fontWeight: 800,
+          marginBottom: 8
+        }}
+      >
+        {context.url ? <Globe2 size={14} /> : <AppWindow size={14} />}
+        {context.host || context.appName}
+      </div>
+      <div style={{ display: 'grid', gap: 6 }}>
+        {rows.map(([label, value]) => (
+          <div key={label} style={{ display: 'grid', gridTemplateColumns: '72px 1fr', gap: 8, alignItems: 'start' }}>
+            <div style={{ fontSize: 10, color: 'var(--ksr-text-3)', fontWeight: 800, textTransform: 'uppercase' }}>{label}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--ksr-text-1)', lineHeight: 1.35, wordBreak: 'break-word' }}>{value}</div>
+          </div>
+        ))}
+      </div>
+    </InsSection>
   );
 }
 

@@ -11,6 +11,7 @@ import { CapturedToast } from './components/overlays/CapturedToast';
 import { RecordingSetupOverlay } from './components/overlays/RecordingSetupOverlay';
 import { FirstRunSetupOverlay } from './components/overlays/FirstRunSetupOverlay';
 import { DiagnosticsOverlay } from './components/overlays/DiagnosticsOverlay';
+import { WhatsNewOverlay } from './components/overlays/WhatsNewOverlay';
 import { useProjectStore } from './state/projectStore';
 import { MOCK_PROJECT } from './state/mockSeed';
 import { applySettingsAppearance } from './services/theme';
@@ -125,6 +126,7 @@ export default function App() {
       <ExportDrawer />
       <RecordingSetupOverlay />
       <FirstRunSetupOverlay />
+      <WhatsNewOverlay />
       <DiagnosticsOverlay />
       <SettingsOverlay />
       <CommandPalette />

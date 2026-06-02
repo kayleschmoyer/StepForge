@@ -46,12 +46,14 @@ const api: StepForgeBridge = {
   },
   export: {
     run: (options) => ipcRenderer.invoke(IPC.ExportRun, options),
+    share: (payload) => ipcRenderer.invoke(IPC.ExportShare, payload),
     print: () => ipcRenderer.invoke(IPC.ExportPrint),
     onProgress: (cb) => subscribe(IPC.ExportProgress, cb)
   },
   settings: {
     get: () => ipcRenderer.invoke(IPC.SettingsGet),
     set: (patch) => ipcRenderer.invoke(IPC.SettingsSet, patch),
+    testEmail: () => ipcRenderer.invoke(IPC.SettingsTestEmail),
     onChanged: (cb) => subscribe(IPC.SettingsChanged, cb)
   },
   dialog: {

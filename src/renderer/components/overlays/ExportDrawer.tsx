@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Copy, Download, ExternalLink, FolderOpen, X, Check, FileText, Printer } from 'lucide-react';
+import { Copy, Download, ExternalLink, FolderOpen, X, Check, FileText, Printer, Send } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import { defaultExportOptions, type ExportFormat } from '@shared/models/Ipc';
@@ -30,11 +30,13 @@ const FORMATS: FormatDef[] = [
   { id: 'Docx', label: 'DOCX', Icon: FileText, sub: 'Editable Word document', extension: 'docx' }
 ];
 
-type Phase = 'idle' | 'exporting' | 'done' | 'error';
+type Phase = 'idle' | 'exporting' | 'sharing' | 'done' | 'shared' | 'error';
 
 export function ExportDrawer() {
   const open = useProjectStore((s) => s.exportOpen);
   const setOpen = useProjectStore((s) => s.setExportOpen);
+  const shareTour = useProjectStore((s) => s.exportShareTour);
+  const setShareTour = useProjectStore((s) => s.setExportShareTour);
   const project = useProjectStore((s) => s.project);
 
   const [format, setFormat] = useState<ExportFormat>('HtmlFull');
@@ -50,14 +52,29 @@ export function ExportDrawer() {
   const [phase, setPhase] = useState<Phase>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [copyLabel, setCopyLabel] = useState('Copy');
+  const [shareRecipient, setShareRecipient] = useState('');
+
+  const tourCardStyle: React.CSSProperties = {
+    borderRadius: 8,
+    border: '1px solid var(--ksr-acc-border)',
+    background: 'var(--ksr-acc-soft)',
+    padding: 12,
+    marginBottom: 10,
+    boxShadow: 'var(--ksr-acc-shadow-sm)'
+  };
 
   useEffect(() => {
     if (!open) {
       setPhase('idle');
       setErrorMsg('');
       setCopyLabel('Copy');
+      setShareTour(false);
     }
-  }, [open]);
+  }, [open, setShareTour]);
+
+  useEffect(() => {
+    if (open && shareTour) setFormat('HtmlFull');
+  }, [open, shareTour]);
 
   useEffect(() => {
     if (!project) return;
@@ -69,7 +86,7 @@ export function ExportDrawer() {
   if (!project) return null;
 
   const resetExportState = () => {
-    if (phase === 'exporting') return;
+    if (phase === 'exporting' || phase === 'sharing') return;
     setPhase('idle');
     setErrorMsg('');
     setExportedPath('');
@@ -109,14 +126,8 @@ export function ExportDrawer() {
     setErrorMsg('');
     try {
       const result = await window.stepForge.export.run({
-        ...defaultExportOptions,
-        format,
-        outputPath,
-        includeScreenshots: opts.screenshots,
-        includeTimestamps: opts.timestamps,
-        includeNotes: opts.notes,
-        includeCompanyBranding: opts.branding,
-        embedImagesAsBase64: opts.embed
+        ...buildExportOptions(),
+        outputPath
       });
       setExportedPath(result.outputPath);
       setPhase('done');
@@ -125,6 +136,36 @@ export function ExportDrawer() {
       setPhase('error');
     }
   };
+
+  const handleShare = async () => {
+    setShareTour(false);
+    setPhase('sharing');
+    setErrorMsg('');
+    try {
+      const result = await window.stepForge.export.share({
+        recipientEmail: shareRecipient,
+        options: buildExportOptions()
+      });
+      setExportedPath(result.outputPath);
+      setPhase('shared');
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : String(e));
+      setPhase('error');
+    }
+  };
+
+  const buildExportOptions = () => ({
+    ...defaultExportOptions,
+    format,
+    includeScreenshots: opts.screenshots,
+    includeTimestamps: opts.timestamps,
+    includeNotes: opts.notes,
+    includeCompanyBranding: opts.branding,
+    embedImagesAsBase64: opts.embed
+  });
+
+  const busy = phase === 'exporting' || phase === 'sharing';
+  const canShare = !busy && Boolean(shareRecipient.trim());
 
   return (
     <>
@@ -214,6 +255,19 @@ export function ExportDrawer() {
         >
           <div>
             <Label>Format</Label>
+            {shareTour && (
+              <div style={tourCardStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: ACCENT, fontSize: 12, fontWeight: 900 }}>
+                  <Send size={14} /> Share walkthrough
+                </div>
+                <div style={{ marginTop: 7, fontSize: 11.5, color: 'var(--ksr-text-2)', lineHeight: 1.45 }}>
+                  HTML is selected for the latest recording. Add a recipient in Share, then press Share to email this exact export type.
+                </div>
+                <button onClick={() => setShareTour(false)} style={{ ...smallButtonStyle, marginTop: 10 }}>
+                  Got it
+                </button>
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {FORMATS.map((f) => {
                 const active = format === f.id;
@@ -321,6 +375,59 @@ export function ExportDrawer() {
           </div>
 
           <div>
+            <Label>Share</Label>
+            <div
+              style={{
+                borderRadius: 8,
+                border: shareTour ? '1px solid var(--ksr-acc-border)' : '1px solid var(--ksr-border-1)',
+                background: 'var(--ksr-surf-1)',
+                padding: 10,
+                display: 'grid',
+                gap: 8,
+                boxShadow: shareTour ? 'var(--ksr-acc-shadow-sm)' : 'none'
+              }}
+            >
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  value={shareRecipient}
+                  onChange={(e) => {
+                    setShareRecipient(e.target.value);
+                    resetExportState();
+                  }}
+                  placeholder="recipient@example.com"
+                  type="email"
+                  style={{
+                    flex: 1,
+                    padding: '8px 11px',
+                    borderRadius: 7,
+                    background: 'var(--ksr-surf-0)',
+                    color: 'var(--ksr-text-1)',
+                    border: '1px solid var(--ksr-border-1)',
+                    fontFamily: 'var(--ksr-font-sans)',
+                    fontSize: 12,
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  onClick={handleShare}
+                  disabled={!canShare}
+                  style={{
+                    ...smallButtonStyle,
+                    opacity: canShare ? 1 : 0.55,
+                    cursor: canShare ? 'pointer' : 'default',
+                    color: canShare ? ACCENT : 'var(--ksr-text-3)'
+                  }}
+                >
+                  {phase === 'sharing' ? <Spinner /> : <Send size={12} />} Share
+                </button>
+              </div>
+              <div style={{ fontSize: 10.5, color: 'var(--ksr-text-3)', lineHeight: 1.45 }}>
+                Sends the selected export type as an attachment using the SMTP account in Settings.
+              </div>
+            </div>
+          </div>
+
+          <div>
             <Label>Xray / Jira</Label>
             <div
               style={{
@@ -414,17 +521,17 @@ export function ExportDrawer() {
                 maxWidth: '100%',
                 padding: '7px 10px',
                 borderRadius: 7,
-                background: phase === 'done'
+                background: phase === 'done' || phase === 'shared'
                   ? 'rgba(52,199,89,0.12)'
                   : phase === 'error'
                     ? 'rgba(255,59,48,0.12)'
                     : 'var(--ksr-surf-1)',
-                color: phase === 'done'
+                color: phase === 'done' || phase === 'shared'
                   ? 'var(--ksr-ok-text)'
                   : phase === 'error'
                     ? 'var(--ksr-bug-text)'
                     : 'var(--ksr-text-3)',
-                border: phase === 'done'
+                border: phase === 'done' || phase === 'shared'
                   ? '1px solid rgba(52,199,89,0.22)'
                   : phase === 'error'
                     ? '1px solid rgba(255,59,48,0.22)'
@@ -433,12 +540,16 @@ export function ExportDrawer() {
                 fontWeight: 700
               }}
             >
-              {phase === 'done' && <Check size={13} />}
+              {(phase === 'done' || phase === 'shared') && <Check size={13} />}
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {phase === 'done'
                   ? `Exported ${fileNameFromPath(exportedPath)}`
+                  : phase === 'shared'
+                    ? `Shared ${fileNameFromPath(exportedPath)} to ${shareRecipient}`
                   : phase === 'error'
                     ? `Failed: ${errorMsg}`
+                    : phase === 'sharing'
+                      ? 'Exporting and sending...'
                     : phase === 'exporting'
                       ? 'Rendering and saving...'
                       : `Ready to export ${project.steps.length} steps`}
@@ -446,7 +557,7 @@ export function ExportDrawer() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            {phase === 'done' && exportedPath && (
+            {(phase === 'done' || phase === 'shared') && exportedPath && (
               <>
                 <button onClick={() => void window.stepForge.app.openPath(exportedPath)} style={smallButtonStyle}>
                   <ExternalLink size={12} /> Open
@@ -461,13 +572,13 @@ export function ExportDrawer() {
             </button>
             <button
               onClick={handleExport}
-              disabled={phase === 'exporting' || !outputPath}
+              disabled={busy || !outputPath}
               style={{
                 ...primaryFooterButtonStyle,
-                cursor: phase === 'exporting' ? 'wait' : 'pointer',
-                background: phase === 'exporting' ? 'var(--ksr-surf-2)' : ACCENT,
-                color: phase === 'exporting' ? 'var(--ksr-text-2)' : 'var(--ksr-text-inverse)',
-                boxShadow: phase === 'exporting' ? 'none' : 'var(--ksr-acc-shadow-md)'
+                cursor: busy ? 'wait' : 'pointer',
+                background: busy ? 'var(--ksr-surf-2)' : ACCENT,
+                color: busy ? 'var(--ksr-text-2)' : 'var(--ksr-text-inverse)',
+                boxShadow: busy ? 'none' : 'var(--ksr-acc-shadow-md)'
               }}
             >
               {phase === 'exporting' ? <Spinner /> : <Download size={13} />}

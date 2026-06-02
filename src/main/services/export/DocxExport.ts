@@ -134,6 +134,7 @@ async function stepTable(step: RecordedStep, options: ExportOptions): Promise<Ta
   const tags = [step.window?.title || '-', options.includeTimestamps ? new Date(step.timestamp).toLocaleString() : ''].filter(Boolean).join('   |   ');
   body.push(new Paragraph({ children: [new TextRun({ text: step.description, bold: true, size: 25, color: INK })] }));
   if (tags) body.push(new Paragraph({ children: [new TextRun({ text: tags, size: 18, color: MUTED })] }));
+  body.push(...appContextParagraphs(step));
   if (step.warnings?.length) {
     step.warnings.forEach((warning) => body.push(new Paragraph({ children: [new TextRun({ text: `Warning: ${warning.message}`, bold: true, color: '92400E' })] })));
   }
@@ -213,4 +214,19 @@ function imageType(path: string): 'jpg' | 'png' | 'gif' | 'bmp' {
   if (extension === '.gif') return 'gif';
   if (extension === '.bmp') return 'bmp';
   return 'png';
+}
+
+function appContextParagraphs(step: RecordedStep): Paragraph[] {
+  if (!step.appContext) return [];
+  const rows = [
+    ['App', step.appContext.appName],
+    ['Page', step.appContext.pageTitle],
+    ['URL', step.appContext.url],
+    ['Host', step.appContext.host]
+  ].filter(([, value]) => Boolean(value));
+  if (!rows.length) return [];
+  return [
+    new Paragraph({ spacing: { before: 80 }, children: [new TextRun({ text: 'App context', bold: true, size: 18, color: MUTED })] }),
+    ...rows.map(([label, value]) => new Paragraph({ children: [new TextRun({ text: `${label}: `, bold: true, size: 18, color: MUTED }), new TextRun({ text: value || '-', size: 18, color: INK })] }))
+  ];
 }

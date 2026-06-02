@@ -10,8 +10,11 @@ import { readFile, stat } from 'node:fs/promises';
 import {
   IPC,
   type DiagnosticEntry,
+  type EmailSettingsTestResult,
   type ExportOptions,
   type ExportResult,
+  type ExportSharePayload,
+  type ExportShareResult,
   type ProjectCreatePayload,
   type ProjectUpdateMetadataPayload,
   type RecoveryInfo,
@@ -21,12 +24,13 @@ import {
   type StepToggleFlagPayload,
   type StepUpdatePayload
 } from '@shared/models/Ipc';
-import type { AppSettings } from '@shared/models/AppSettings';
+import type { AppSettingsPatch } from '@shared/models/AppSettings';
 import type { Project, RecentProject } from '@shared/models/Project';
 import type { SettingsStore } from '../services/settings/SettingsStore';
 import type { SessionStorage } from '../services/storage/SessionStorage';
 import type { RecordingEngine } from '../services/engine/RecordingEngine';
 import type { ExportService } from '../services/export/ExportService';
+import type { EmailShareService } from '../services/export/EmailShareService';
 import type { AutoUpdaterBridge } from '../updater/AutoUpdater';
 import { diagnostics } from '../services/diagnostics/DiagnosticsStore';
 
@@ -36,6 +40,7 @@ interface IpcContext {
   storage: SessionStorage;
   engine: RecordingEngine;
   exporter: ExportService;
+  emailShare: EmailShareService;
   updater: AutoUpdaterBridge;
 }
 
@@ -131,16 +136,24 @@ export function registerIpc(context: IpcContext): void {
     getEditorWindow()?.webContents.send(IPC.ExportProgress, { phase: 'done', percent: 100 });
     return result;
   });
+  ipcMain.handle(IPC.ExportShare, async (_, payload: ExportSharePayload): Promise<ExportShareResult> => {
+    const project = context.engine.project;
+    if (!project) throw new Error('No active project to share');
+    const result = await context.emailShare.share(project, payload);
+    getEditorWindow()?.webContents.send(IPC.ExportProgress, { phase: 'done', percent: 100 });
+    return result;
+  });
   ipcMain.handle(IPC.ExportPrint, async () => {});
 
   // ── Settings ────────────────────────────────────────────
   ipcMain.handle(IPC.SettingsGet, async () => context.settings.load());
-  ipcMain.handle(IPC.SettingsSet, async (_, patch: Partial<AppSettings>) => {
+  ipcMain.handle(IPC.SettingsSet, async (_, patch: AppSettingsPatch) => {
     const next = await context.settings.patch(patch);
     const w = getEditorWindow();
     w?.webContents.send(IPC.SettingsChanged, next);
     return next;
   });
+  ipcMain.handle(IPC.SettingsTestEmail, async (): Promise<EmailSettingsTestResult> => context.emailShare.testSettings());
 
   // ── Dialogs ─────────────────────────────────────────────
   ipcMain.handle(

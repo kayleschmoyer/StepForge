@@ -1,6 +1,6 @@
 {
   "name": "stepforge",
-  "version": "1.0.18",
+  "version": "1.0.22",
   "description": "Kayle's Steps Recorder — modern QA-documentation tool for Windows",
   "main": "out/main/index.js",
   "author": {
@@ -27,6 +27,7 @@
     "docx": "^9.6.1",
     "electron-updater": "^6.8.3",
     "lucide-react": "^0.469.0",
+    "nodemailer": "^8.0.10",
     "sharp": "^0.34.5",
     "uiohook-napi": "^1.5.5",
     "write-file-atomic": "^7.0.1",
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",

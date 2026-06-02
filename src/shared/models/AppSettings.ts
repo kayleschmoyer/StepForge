@@ -45,6 +45,17 @@ export interface AppSettings {
   autoSaveEnabled: boolean;
   autoSaveIntervalSeconds: number;
   pauseOnExcludedApp: boolean;
+  lastSeenWhatsNewVersion: string;
+
+  // Email sharing
+  emailSharingEnabled: boolean;
+  emailSmtpHost: string;
+  emailSmtpPort: number;
+  emailSmtpSecure: boolean;
+  emailSmtpUser: string;
+  emailFromAddress: string;
+  emailFromName: string;
+  emailPasswordSet: boolean;
 
   // Defaults
   firstRunSetupComplete: boolean;
@@ -62,6 +73,11 @@ export interface AppSettings {
   hotkeyFlagImportant: string;
   hotkeyAddManualStep: string;
 }
+
+export type AppSettingsPatch = Partial<AppSettings> & {
+  emailSmtpPassword?: string;
+  clearEmailSmtpPassword?: boolean;
+};
 
 export const defaultAppSettings: AppSettings = {
   captureDelayMs: 25,
@@ -82,6 +98,16 @@ export const defaultAppSettings: AppSettings = {
   autoSaveEnabled: true,
   autoSaveIntervalSeconds: 30,
   pauseOnExcludedApp: true,
+  lastSeenWhatsNewVersion: '',
+
+  emailSharingEnabled: true,
+  emailSmtpHost: 'smtp.gmail.com',
+  emailSmtpPort: 465,
+  emailSmtpSecure: true,
+  emailSmtpUser: 'KaylesStepsForge@gmail.com',
+  emailFromAddress: 'KaylesStepsForge@gmail.com',
+  emailFromName: 'StepForge',
+  emailPasswordSet: false,
 
   firstRunSetupComplete: false,
   defaultTesterName: '',

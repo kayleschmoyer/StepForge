@@ -30,6 +30,22 @@ export interface WindowInfo {
   processId?: number;
   className?: string;
   bounds?: { x: number; y: number; width: number; height: number };
+  appName?: string;
+  browserUrl?: string;
+  browserHost?: string;
+  pageTitle?: string;
+}
+
+export interface AppContext {
+  appName: string;
+  windowTitle: string;
+  processName?: string;
+  pageTitle?: string;
+  url?: string;
+  host?: string;
+  windowBounds?: { x: number; y: number; width: number; height: number };
+  capturedAt: string;
+  confidence: 'high' | 'medium' | 'low';
 }
 
 export interface ElementInfo {
@@ -57,6 +73,7 @@ export interface RecordedStep {
   userNote?: string;
   flags: StepFlag[];
   window?: WindowInfo;
+  appContext?: AppContext;
   element?: ElementInfo;
   /** File path under the session directory, e.g. screenshots/{id}.png. */
   screenshotPath: string;

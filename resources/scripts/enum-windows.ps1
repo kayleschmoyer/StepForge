@@ -4,6 +4,7 @@ param(
 )
 
 Add-Type -AssemblyName System.Windows.Forms
+try { Add-Type -AssemblyName UIAutomationClient -ErrorAction SilentlyContinue } catch {}
 
 Add-Type @"
 using System;
@@ -102,6 +103,71 @@ function Test-CapturableTopLevelWindow([IntPtr]$Hwnd, [int]$PointX, [int]$PointY
   return Test-PointInRect $bounds $PointX $PointY
 }
 
+function Get-FriendlyAppName([string]$ProcessName) {
+  switch -Regex ($ProcessName.ToLowerInvariant()) {
+    '^chrome\.exe$' { return 'Google Chrome' }
+    '^msedge\.exe$' { return 'Microsoft Edge' }
+    '^firefox\.exe$' { return 'Mozilla Firefox' }
+    '^brave\.exe$' { return 'Brave' }
+    '^iexplore\.exe$' { return 'Internet Explorer' }
+    '^code\.exe$' { return 'Visual Studio Code' }
+    '^explorer\.exe$' { return 'File Explorer' }
+    default { return $ProcessName -replace '\.exe$', '' }
+  }
+}
+
+function Get-PageTitle([string]$WindowTitle, [string]$AppName) {
+  if ([string]::IsNullOrWhiteSpace($WindowTitle)) { return '' }
+  $title = $WindowTitle.Trim()
+  $suffixes = @(' - Google Chrome', ' - Microsoft Edge', ' — Mozilla Firefox', ' - Mozilla Firefox', ' - Brave')
+  foreach ($suffix in $suffixes) {
+    if ($title.EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase)) {
+      return $title.Substring(0, $title.Length - $suffix.Length).Trim()
+    }
+  }
+  if ($AppName -and $title.EndsWith(" - $AppName", [StringComparison]::OrdinalIgnoreCase)) {
+    return $title.Substring(0, $title.Length - ($AppName.Length + 3)).Trim()
+  }
+  return $title
+}
+
+function Test-BrowserProcess([string]$ProcessName) {
+  return @('chrome.exe', 'msedge.exe', 'firefox.exe', 'brave.exe') -contains $ProcessName.ToLowerInvariant()
+}
+
+function Test-LooksLikeUrl([string]$Value) {
+  if ([string]::IsNullOrWhiteSpace($Value)) { return $false }
+  $candidate = $Value.Trim()
+  return $candidate -match '^(https?://|file://|[a-z0-9.-]+\.[a-z]{2,})(/|$)'
+}
+
+function Get-UrlHost([string]$Value) {
+  if ([string]::IsNullOrWhiteSpace($Value)) { return '' }
+  $candidate = $Value.Trim()
+  if ($candidate -notmatch '^[a-z]+://') { $candidate = "https://$candidate" }
+  try { return ([Uri]$candidate).Host } catch { return '' }
+}
+
+function Get-BrowserUrl([IntPtr]$Hwnd, [string]$ProcessName) {
+  if (-not (Test-BrowserProcess $ProcessName)) { return '' }
+  try {
+    $root = [System.Windows.Automation.AutomationElement]::FromHandle($Hwnd)
+    if ($null -eq $root) { return '' }
+    $condition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Edit)
+    $edits = $root.FindAll([System.Windows.Automation.TreeScope]::Descendants, $condition)
+    foreach ($edit in $edits) {
+      $valuePattern = $null
+      if ($edit.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$valuePattern)) {
+        $value = $valuePattern.Current.Value
+        if (Test-LooksLikeUrl $value) { return $value.Trim() }
+      }
+      $name = $edit.Current.Name
+      if (Test-LooksLikeUrl $name) { return $name.Trim() }
+    }
+  } catch {}
+  return ''
+}
+
 function Find-TopWindowAtPoint([int]$PointX, [int]$PointY) {
   $point = New-Object Win32WindowProbe+POINT
   $point.X = $PointX
@@ -169,6 +235,10 @@ $rect = Get-WindowBounds $handle
 $className = Get-WindowClass $handle
 $processName = ''
 try { $processName = (Get-Process -Id $processId -ErrorAction Stop).ProcessName + '.exe' } catch {}
+$appName = Get-FriendlyAppName $processName
+$browserUrl = Get-BrowserUrl $handle $processName
+$browserHost = Get-UrlHost $browserUrl
+$pageTitle = Get-PageTitle $titleBuilder.ToString() $appName
 
 [pscustomobject]@{
   handle = ([Int64]$handle).ToString()
@@ -176,5 +246,9 @@ try { $processName = (Get-Process -Id $processId -ErrorAction Stop).ProcessName 
   processName = $processName
   processId = [int]$processId
   className = $className
+  appName = $appName
+  browserUrl = $browserUrl
+  browserHost = $browserHost
+  pageTitle = $pageTitle
   bounds = @{ x = $rect.Left; y = $rect.Top; width = ($rect.Right - $rect.Left); height = ($rect.Bottom - $rect.Top) }
 } | ConvertTo-Json -Compress

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { AppSettings } from '@shared/models/AppSettings';
 import type { Project } from '@shared/models/Project';
-import type { ActionType, RecordedStep, WindowInfo } from '@shared/models/Step';
+import type { ActionType, AppContext, RecordedStep, WindowInfo } from '@shared/models/Step';
 import { CaptureService } from '../capture/CaptureService';
 import { ImageOps } from '../capture/ImageOps';
 import { WindowTracker } from '../automation/WindowTracker';
@@ -70,9 +70,10 @@ export class StepProcessor {
       stepNumber: project.nextStepNumber,
       timestamp: event.timestamp,
       actionType: this.actionType(event),
-      description: describeInput(event),
+      description: describeInput(event, windowInfo),
       flags: [],
       window: windowInfo,
+      appContext: buildAppContext(windowInfo, event.timestamp),
       screenshotPath,
       thumbnailPath,
       keysPressed: event.kind === 'key' ? event.keys : '',
@@ -133,4 +134,32 @@ function shouldIgnoreWindow(windowInfo: WindowInfo | undefined, settings: AppSet
   if (excludedProcesses.has(processName)) return true;
   if (processName === 'stepforge.exe' || processName === 'kaylesstepsrecorder.exe') return true;
   return title.includes('stepforge') || title.includes("kayle's steps recorder");
+}
+
+function buildAppContext(windowInfo: WindowInfo | undefined, capturedAt: string): AppContext | undefined {
+  if (!windowInfo) return undefined;
+  const appName = windowInfo.appName || friendlyAppName(windowInfo.processName) || 'Unknown app';
+  const hasUrl = Boolean(windowInfo.browserUrl?.trim());
+  return {
+    appName,
+    windowTitle: windowInfo.title || '',
+    processName: windowInfo.processName,
+    pageTitle: windowInfo.pageTitle || undefined,
+    url: windowInfo.browserUrl || undefined,
+    host: windowInfo.browserHost || undefined,
+    windowBounds: windowInfo.bounds,
+    capturedAt,
+    confidence: hasUrl ? 'high' : windowInfo.title ? 'medium' : 'low'
+  };
+}
+
+function friendlyAppName(processName: string | undefined): string {
+  const value = processName?.toLowerCase() ?? '';
+  if (value === 'chrome.exe') return 'Google Chrome';
+  if (value === 'msedge.exe') return 'Microsoft Edge';
+  if (value === 'firefox.exe') return 'Mozilla Firefox';
+  if (value === 'brave.exe') return 'Brave';
+  if (value === 'explorer.exe') return 'File Explorer';
+  if (value === 'code.exe') return 'Visual Studio Code';
+  return processName?.replace(/\.exe$/i, '') ?? '';
 }

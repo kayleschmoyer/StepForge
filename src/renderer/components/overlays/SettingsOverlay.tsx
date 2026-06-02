@@ -4,25 +4,28 @@ import {
   Camera,
   Settings as SettingsIcon,
   FileText,
+  Mail,
   CircleHelp,
   Search,
   Check
 } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
-import { accentColorPresets, defaultAppSettings, type AppSettings } from '@shared/models/AppSettings';
+import { accentColorPresets, defaultAppSettings, type AppSettings, type AppSettingsPatch } from '@shared/models/AppSettings';
 import type { AppInfo } from '@shared/models/Ipc';
 import { BrandMark } from '../ui/BrandMark';
 import { setAccentColor } from '@renderer/services/theme';
+import type { SettingsSection } from '@renderer/state/projectStore';
 
 const ACCENT = 'var(--ksr-acc)';
 
-type Section = 'capture' | 'app' | 'defaults' | 'about';
+type Section = SettingsSection;
 
 const SECTIONS: { id: Section; label: string; Icon: ComponentType<{ size?: number }> }[] = [
   { id: 'capture', label: 'Capture', Icon: Camera },
   { id: 'app', label: 'App', Icon: SettingsIcon },
   { id: 'defaults', label: 'Defaults', Icon: FileText },
+  { id: 'email', label: 'Email', Icon: Mail },
   { id: 'about', label: 'About', Icon: CircleHelp }
 ];
 
@@ -31,9 +34,20 @@ export function SettingsOverlay() {
   const setOpen = useProjectStore((s) => s.setSettingsOpen);
   const settings = useProjectStore((s) => s.settings);
   const setSettings = useProjectStore((s) => s.setSettings);
-  const [section, setSection] = useState<Section>('capture');
+  const requestedSection = useProjectStore((s) => s.settingsSection);
+  const setRequestedSection = useProjectStore((s) => s.setSettingsSection);
+  const [section, setSection] = useState<Section>(requestedSection);
 
-  const patch = async (p: Partial<AppSettings>) => {
+  useEffect(() => {
+    if (open) setSection(requestedSection);
+  }, [open, requestedSection]);
+
+  const chooseSection = (next: Section) => {
+    setSection(next);
+    setRequestedSection(next);
+  };
+
+  const patch = async (p: AppSettingsPatch) => {
     const next = await window.stepForge.settings.set(p);
     setSettings(next);
   };
@@ -101,7 +115,7 @@ export function SettingsOverlay() {
             return (
               <button
                 key={s.id}
-                onClick={() => setSection(s.id)}
+                onClick={() => chooseSection(s.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -157,6 +171,7 @@ export function SettingsOverlay() {
           {section === 'capture' && <CaptureSection settings={settings} patch={patch} />}
           {section === 'app' && <AppSection settings={settings} patch={patch} />}
           {section === 'defaults' && <DefaultsSection settings={settings} patch={patch} />}
+          {section === 'email' && <EmailSection settings={settings} patch={patch} />}
           {section === 'about' && <AboutSection />}
         </div>
       </div>
@@ -301,20 +316,25 @@ function TextInput({
   value,
   onChange,
   mono,
-  placeholder
+  placeholder,
+  type = 'text',
+  width = 260
 }: {
   value: string;
   onChange: (next: string) => void;
   mono?: boolean;
   placeholder?: string;
+  type?: string;
+  width?: number | string;
 }) {
   return (
     <input
+      type={type}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        width: 260,
+        width,
         padding: '6px 10px',
         borderRadius: 6,
         background: 'var(--ksr-surf-1)',
@@ -341,7 +361,7 @@ function CaptureSection({
   patch
 }: {
   settings: AppSettings;
-  patch: (p: Partial<AppSettings>) => void;
+  patch: (p: AppSettingsPatch) => void;
 }) {
   return (
     <>
@@ -401,7 +421,7 @@ function AppSection({
   patch
 }: {
   settings: AppSettings;
-  patch: (p: Partial<AppSettings>) => void;
+  patch: (p: AppSettingsPatch) => void;
 }) {
   return (
     <>
@@ -515,7 +535,7 @@ function DefaultsSection({
   patch
 }: {
   settings: AppSettings;
-  patch: (p: Partial<AppSettings>) => void;
+  patch: (p: AppSettingsPatch) => void;
 }) {
   const [excluded, setExcluded] = useState(settings.excludedProcesses.join(', '));
   useEffect(() => setExcluded(settings.excludedProcesses.join(', ')), [settings.excludedProcesses]);
@@ -562,7 +582,7 @@ function DefaultsSection({
       </Row>
       <Row label="Reset to defaults">
         <button
-          onClick={() => patch({ ...defaultAppSettings })}
+          onClick={() => patch({ ...defaultAppSettings, clearEmailSmtpPassword: true })}
           style={{
             padding: '5px 12px',
             borderRadius: 6,
@@ -580,6 +600,196 @@ function DefaultsSection({
     </>
   );
 }
+
+function EmailSection({
+  settings,
+  patch
+}: {
+  settings: AppSettings;
+  patch: (p: AppSettingsPatch) => void;
+}) {
+  const [password, setPassword] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const applyGmailDefaults = () => {
+    patch({
+      emailSmtpHost: 'smtp.gmail.com',
+      emailSmtpPort: 465,
+      emailSmtpSecure: true
+    });
+    setTestResult(null);
+  };
+
+  const handleTestEmail = async () => {
+    if (testing) return;
+    setTesting(true);
+    setTestResult(null);
+    try {
+      if (password.trim()) {
+        await window.stepForge.settings.set({ emailSmtpPassword: password });
+        setPassword('');
+      }
+      const result = await window.stepForge.settings.testEmail();
+      setTestResult({ ok: true, message: result.message });
+    } catch (error) {
+      setTestResult({ ok: false, message: error instanceof Error ? error.message : String(error) });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <>
+      <SectionHead title="Email sharing" sub="Configure SMTP for sending exported reports from StepForge." />
+      <Row label="Enable email sharing">
+        <Toggle
+          on={settings.emailSharingEnabled}
+          onChange={(v) => patch({ emailSharingEnabled: v })}
+        />
+      </Row>
+      <Divider />
+      <Row label="SMTP host">
+        <TextInput
+          value={settings.emailSmtpHost}
+          onChange={(v) => {
+            patch({ emailSmtpHost: v });
+            setTestResult(null);
+          }}
+          mono
+          placeholder="smtp.gmail.com"
+        />
+      </Row>
+      <Row label="SMTP port">
+        <NumInput
+          value={settings.emailSmtpPort}
+          onChange={(v) => {
+            patch({ emailSmtpPort: v });
+            setTestResult(null);
+          }}
+          suffix="port"
+        />
+      </Row>
+      <Row label="Use SSL/TLS" sub="Gmail usually uses SSL/TLS on port 465.">
+        <Toggle
+          on={settings.emailSmtpSecure}
+          onChange={(v) => {
+            patch({ emailSmtpSecure: v });
+            setTestResult(null);
+          }}
+        />
+      </Row>
+      <Row label="Gmail defaults">
+        <button onClick={applyGmailDefaults} style={secondarySmallButtonStyle}>
+          Apply
+        </button>
+      </Row>
+      <Divider />
+      <Row label="From name">
+        <TextInput
+          value={settings.emailFromName}
+          onChange={(v) => {
+            patch({ emailFromName: v });
+            setTestResult(null);
+          }}
+          placeholder="StepForge"
+        />
+      </Row>
+      <Row label="From address" sub="For Gmail, use the same account as SMTP username.">
+        <TextInput
+          value={settings.emailFromAddress}
+          onChange={(v) => {
+            patch({ emailFromAddress: v });
+            setTestResult(null);
+          }}
+          placeholder="stepforge@gmail.com"
+          type="email"
+        />
+      </Row>
+      <Row label="SMTP username" sub="For Gmail, use the exact account that created the app password.">
+        <TextInput
+          value={settings.emailSmtpUser}
+          onChange={(v) => {
+            patch({ emailSmtpUser: v });
+            setTestResult(null);
+          }}
+          placeholder="stepforge@gmail.com"
+          type="email"
+        />
+      </Row>
+      <Row label="App password" sub={settings.emailPasswordSet ? 'A password is saved for this device. Re-save it after changing SMTP username.' : 'Use the 16-character Gmail app password, not the normal account password.'}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <TextInput
+            value={password}
+            onChange={setPassword}
+            placeholder={settings.emailPasswordSet ? 'Saved' : 'Enter app password'}
+            type="password"
+            width={180}
+          />
+          <button
+            onClick={() => {
+              patch({ emailSmtpPassword: password });
+              setPassword('');
+              setTestResult(null);
+            }}
+            disabled={!password.trim()}
+            style={{ ...secondarySmallButtonStyle, opacity: password.trim() ? 1 : 0.55 }}
+          >
+            Save
+          </button>
+          {settings.emailPasswordSet && (
+            <button
+              onClick={() => {
+                patch({ clearEmailSmtpPassword: true });
+                setTestResult(null);
+              }}
+              style={secondarySmallButtonStyle}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </Row>
+      <Row label="Test settings" sub="Checks SMTP login only. No test email is sent.">
+        <button
+          onClick={handleTestEmail}
+          disabled={testing}
+          style={{ ...secondarySmallButtonStyle, color: testing ? 'var(--ksr-text-3)' : ACCENT }}
+        >
+          {testing ? 'Testing...' : 'Test'}
+        </button>
+      </Row>
+      {testResult && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: '10px 12px',
+            borderRadius: 7,
+            border: `1px solid ${testResult.ok ? 'rgba(52,199,89,0.25)' : 'rgba(255,59,48,0.25)'}`,
+            background: testResult.ok ? 'rgba(52,199,89,0.12)' : 'rgba(255,59,48,0.12)',
+            color: testResult.ok ? 'var(--ksr-ok-text)' : 'var(--ksr-bug-text)',
+            fontSize: 11.5,
+            fontWeight: 700,
+            lineHeight: 1.5
+          }}
+        >
+          {testResult.message}
+        </div>
+      )}
+    </>
+  );
+}
+
+const secondarySmallButtonStyle: React.CSSProperties = {
+  padding: '5px 12px',
+  borderRadius: 6,
+  background: 'var(--ksr-surf-2)',
+  border: '1px solid var(--ksr-border-1)',
+  color: 'var(--ksr-text-2)',
+  fontSize: 11,
+  fontWeight: 600,
+  cursor: 'pointer'
+};
 
 function AboutSection() {
   const updateStatus = useProjectStore((s) => s.updateStatus);

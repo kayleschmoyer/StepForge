@@ -29,7 +29,21 @@ function step(
       handle: '0',
       title: 'Chrome — Sign-in',
       processName: 'chrome.exe',
-      processId: 12104
+      processId: 12104,
+      appName: 'Google Chrome',
+      browserUrl: 'https://portal.acme.example.com/login',
+      browserHost: 'portal.acme.example.com',
+      pageTitle: 'Acme Portal Sign-in'
+    },
+    appContext: partial.appContext ?? {
+      appName: 'Google Chrome',
+      windowTitle: 'Acme Portal Sign-in - Google Chrome',
+      processName: 'chrome.exe',
+      pageTitle: 'Acme Portal Sign-in',
+      url: 'https://portal.acme.example.com/login',
+      host: 'portal.acme.example.com',
+      capturedAt: new Date(now.getTime() + n * 12_000).toISOString(),
+      confidence: 'high'
     },
     element: partial.element,
     screenshotPath: '',

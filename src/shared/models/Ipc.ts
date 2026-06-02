@@ -1,4 +1,4 @@
-import type { AppSettings } from './AppSettings';
+import type { AppSettings, AppSettingsPatch } from './AppSettings';
 import type { Annotation } from './Annotation';
 import type { Project, RecentProject, SessionMetadata } from './Project';
 import type { RecordedStep, StepFlag } from './Step';
@@ -41,12 +41,14 @@ export const IPC = {
 
   // Export
   ExportRun: 'export:run',
+  ExportShare: 'export:share',
   ExportPrint: 'export:print',
   ExportProgress: 'export:progress',
 
   // Settings
   SettingsGet: 'settings:get',
   SettingsSet: 'settings:set',
+  SettingsTestEmail: 'settings:testEmail',
   SettingsChanged: 'settings:changed',
 
   // Dialogs
@@ -121,6 +123,20 @@ export const defaultExportOptions: ExportOptions = {
 export interface ExportResult {
   outputPath: string;
   sizeBytes: number;
+}
+
+export interface ExportSharePayload {
+  recipientEmail: string;
+  options: Omit<ExportOptions, 'outputPath'>;
+}
+
+export interface ExportShareResult extends ExportResult {
+  recipientEmail: string;
+}
+
+export interface EmailSettingsTestResult {
+  ok: boolean;
+  message: string;
 }
 
 export interface ExportProgress {
@@ -243,12 +259,14 @@ export interface StepForgeBridge {
   };
   export: {
     run: (options: ExportOptions) => Promise<ExportResult>;
+    share: (payload: ExportSharePayload) => Promise<ExportShareResult>;
     print: () => Promise<void>;
     onProgress: (cb: (progress: ExportProgress) => void) => () => void;
   };
   settings: {
     get: () => Promise<AppSettings>;
-    set: (patch: Partial<AppSettings>) => Promise<AppSettings>;
+    set: (patch: AppSettingsPatch) => Promise<AppSettings>;
+    testEmail: () => Promise<EmailSettingsTestResult>;
     onChanged: (cb: (settings: AppSettings) => void) => () => void;
   };
   dialog: {

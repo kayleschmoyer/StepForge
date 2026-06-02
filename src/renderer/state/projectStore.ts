@@ -9,6 +9,7 @@ import type { RecoveryInfo, UpdateStatus } from '@shared/models/Ipc';
 
 export type ViewName = 'HOME' | 'EDITOR';
 export type EditorTab = 'edit' | 'preview';
+export type SettingsSection = 'capture' | 'app' | 'defaults' | 'email' | 'about';
 export type AnnotationTool =
   | 'select'
   | 'arrow'
@@ -32,7 +33,9 @@ interface AppState {
   unsavedRecovery: RecoveryInfo | null;
 
   exportOpen: boolean;
+  exportShareTour: boolean;
   settingsOpen: boolean;
+  settingsSection: SettingsSection;
   paletteOpen: boolean;
   recordingSetupOpen: boolean;
   firstRunSetupOpen: boolean;
@@ -62,7 +65,9 @@ interface AppState {
   setUnsavedRecovery: (info: RecoveryInfo | null) => void;
 
   setExportOpen: (open: boolean) => void;
+  setExportShareTour: (open: boolean) => void;
   setSettingsOpen: (open: boolean) => void;
+  setSettingsSection: (section: SettingsSection) => void;
   setPaletteOpen: (open: boolean) => void;
   setRecordingSetupOpen: (open: boolean) => void;
   setFirstRunSetupOpen: (open: boolean) => void;
@@ -86,7 +91,9 @@ export const useProjectStore = create<AppState>((set) => ({
   unsavedRecovery: null,
 
   exportOpen: false,
+  exportShareTour: false,
   settingsOpen: false,
+  settingsSection: 'capture',
   paletteOpen: false,
   recordingSetupOpen: false,
   firstRunSetupOpen: false,
@@ -216,7 +223,9 @@ export const useProjectStore = create<AppState>((set) => ({
   setUnsavedRecovery: (unsavedRecovery) => set({ unsavedRecovery }),
 
   setExportOpen: (exportOpen) => set({ exportOpen }),
+  setExportShareTour: (exportShareTour) => set({ exportShareTour }),
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
+  setSettingsSection: (settingsSection) => set({ settingsSection }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setRecordingSetupOpen: (recordingSetupOpen) => set({ recordingSetupOpen }),
   setFirstRunSetupOpen: (firstRunSetupOpen) => set({ firstRunSetupOpen }),

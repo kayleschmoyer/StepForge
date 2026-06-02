@@ -13,6 +13,7 @@ import { InputHookService } from './services/hooks/InputHookService';
 import { StepProcessor } from './services/engine/StepProcessor';
 import { RecordingEngine } from './services/engine/RecordingEngine';
 import { ExportService } from './services/export/ExportService';
+import { EmailShareService } from './services/export/EmailShareService';
 import { TrayMenu } from './tray/trayMenu';
 import { AutoUpdaterBridge } from './updater/AutoUpdater';
 import { IPC } from '@shared/models/Ipc';
@@ -35,6 +36,7 @@ const hooks = new InputHookService();
 const processor = new StepProcessor(captureService, imageOps, imageStorage, windowTracker);
 const engine = new RecordingEngine(storage, hooks, processor, () => settings.load(), () => editorWindow, stepForgeWindowBounds);
 const exporter = new ExportService();
+const emailShare = new EmailShareService(settings, exporter);
 const updater = new AutoUpdaterBridge(
   () => editorWindow,
   prepareForUpdateInstall,
@@ -153,7 +155,7 @@ const singleInstance = app.requestSingleInstanceLock();
 if (!singleInstance) app.quit();
 
 app.whenReady().then(() => {
-  registerIpc({ getEditorWindow: () => editorWindow, settings, storage, engine, exporter, updater });
+  registerIpc({ getEditorWindow: () => editorWindow, settings, storage, engine, exporter, emailShare, updater });
   createEditorWindow();
   hudWindow = createHudWindow();
   wireEngineEvents();
