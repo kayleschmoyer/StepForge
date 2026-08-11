@@ -3,6 +3,7 @@ import { basename, dirname, join } from 'node:path';
 import type { ExportOptions, ExportResult } from '@shared/models/Ipc';
 import type { Project } from '@shared/models/Project';
 import type { RecordedStep } from '@shared/models/Step';
+import { summarizeAppContext } from '@shared/util/appContext';
 import { ImageOps } from '../capture/ImageOps';
 
 const imageOps = new ImageOps();
@@ -21,7 +22,7 @@ export async function exportMarkdown(project: Project, options: ExportOptions): 
   lines.push('## Steps', '');
   for (const step of project.steps.filter((candidate) => options.includeDeletedSteps || !candidate.isDeleted)) {
     lines.push(`### ${step.stepNumber}. ${step.description}`, '');
-    const context = appContextLines(step);
+    const context = appContextLines(step, options);
     if (context.length) lines.push(...context, '');
     if (options.includeScreenshots && step.screenshotPath) {
       const imageName = `${step.stepNumber}-${basename(step.screenshotPath)}`;
@@ -35,14 +36,9 @@ export async function exportMarkdown(project: Project, options: ExportOptions): 
   return { outputPath: options.outputPath, sizeBytes: Buffer.byteLength(lines.join('\n')) };
 }
 
-function appContextLines(step: RecordedStep): string[] {
-  if (!step.appContext) return [];
-  const rows = [
-    ['App', step.appContext.appName],
-    ['Page', step.appContext.pageTitle],
-    ['URL', step.appContext.url],
-    ['Host', step.appContext.host]
-  ].filter(([, value]) => Boolean(value));
+function appContextLines(step: RecordedStep, options: ExportOptions): string[] {
+  if (!options.includeAppContext) return [];
+  const { rows } = summarizeAppContext(step.appContext);
   if (!rows.length) return [];
-  return ['**App context**', '', ...rows.map(([label, value]) => `- ${label}: ${value}`)];
+  return ['**App context**', '', ...rows.map(({ label, value }) => `- ${label}: ${value}`)];
 }

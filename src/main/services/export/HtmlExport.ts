@@ -3,6 +3,7 @@ import { basename, dirname, join } from 'node:path';
 import type { ExportOptions } from '@shared/models/Ipc';
 import type { Project } from '@shared/models/Project';
 import type { RecordedStep } from '@shared/models/Step';
+import { summarizeAppContext } from '@shared/util/appContext';
 import { ImageOps } from '../capture/ImageOps';
 
 const imageOps = new ImageOps();
@@ -21,20 +22,15 @@ async function renderStep(step: RecordedStep, options: ExportOptions, compact: b
     ? `<div class="warnings">${step.warnings.map((warning) => `<div>${escapeHtml(warning.message)}</div>`).join('')}</div>`
     : '';
   const timestamp = options.includeTimestamps ? `<span>${escapeHtml(new Date(step.timestamp).toLocaleTimeString())}</span>` : '';
-  const context = appContext(step);
+  const context = appContext(step, options);
   return `<article class="step ${compact ? 'compact' : ''}"><div class="badge">${step.stepNumber}</div><div><h3>${escapeHtml(step.description)}</h3><div class="tags"><span>${escapeHtml(step.window?.title ?? '-')}</span>${timestamp}</div>${context}${warnings}${image}${note}</div></article>`;
 }
 
-function appContext(step: RecordedStep): string {
-  if (!step.appContext) return '';
-  const rows = [
-    ['App', step.appContext.appName],
-    ['Page', step.appContext.pageTitle],
-    ['URL', step.appContext.url],
-    ['Host', step.appContext.host]
-  ].filter((row): row is [string, string] => Boolean(row[1]));
+function appContext(step: RecordedStep, options: ExportOptions): string {
+  if (!options.includeAppContext) return '';
+  const { rows } = summarizeAppContext(step.appContext);
   if (!rows.length) return '';
-  return `<div class="context">${rows.map(([label, value]) => `<div><b>${escapeHtml(label)}</b><span>${escapeHtml(value || '-')}</span></div>`).join('')}</div>`;
+  return `<div class="context">${rows.map(({ label, value }) => `<div><b>${escapeHtml(label)}</b><span>${escapeHtml(value)}</span></div>`).join('')}</div>`;
 }
 
 async function imageTag(step: RecordedStep, options: ExportOptions): Promise<string> {

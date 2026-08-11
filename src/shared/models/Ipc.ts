@@ -101,6 +101,7 @@ export interface ExportOptions {
   includeTimestamps: boolean;
   includeMetadata: boolean;
   includeNotes: boolean;
+  includeAppContext: boolean;
   includeCompanyBranding: boolean;
   embedImagesAsBase64: boolean;
   maxImageWidth: number;
@@ -114,6 +115,7 @@ export const defaultExportOptions: ExportOptions = {
   includeTimestamps: true,
   includeMetadata: true,
   includeNotes: true,
+  includeAppContext: false,
   includeCompanyBranding: true,
   embedImagesAsBase64: true,
   maxImageWidth: 1200,

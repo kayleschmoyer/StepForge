@@ -19,6 +19,7 @@ import sharp from 'sharp';
 import type { ExportOptions, ExportResult } from '@shared/models/Ipc';
 import type { Project } from '@shared/models/Project';
 import type { RecordedStep } from '@shared/models/Step';
+import { summarizeAppContext } from '@shared/util/appContext';
 import { ImageOps } from '../capture/ImageOps';
 
 const ACCENT = '0EA5E9';
@@ -134,7 +135,7 @@ async function stepTable(step: RecordedStep, options: ExportOptions): Promise<Ta
   const tags = [step.window?.title || '-', options.includeTimestamps ? new Date(step.timestamp).toLocaleString() : ''].filter(Boolean).join('   |   ');
   body.push(new Paragraph({ children: [new TextRun({ text: step.description, bold: true, size: 25, color: INK })] }));
   if (tags) body.push(new Paragraph({ children: [new TextRun({ text: tags, size: 18, color: MUTED })] }));
-  body.push(...appContextParagraphs(step));
+  body.push(...appContextParagraphs(step, options));
   if (step.warnings?.length) {
     step.warnings.forEach((warning) => body.push(new Paragraph({ children: [new TextRun({ text: `Warning: ${warning.message}`, bold: true, color: '92400E' })] })));
   }
@@ -216,17 +217,12 @@ function imageType(path: string): 'jpg' | 'png' | 'gif' | 'bmp' {
   return 'png';
 }
 
-function appContextParagraphs(step: RecordedStep): Paragraph[] {
-  if (!step.appContext) return [];
-  const rows = [
-    ['App', step.appContext.appName],
-    ['Page', step.appContext.pageTitle],
-    ['URL', step.appContext.url],
-    ['Host', step.appContext.host]
-  ].filter(([, value]) => Boolean(value));
+function appContextParagraphs(step: RecordedStep, options: ExportOptions): Paragraph[] {
+  if (!options.includeAppContext) return [];
+  const { rows } = summarizeAppContext(step.appContext);
   if (!rows.length) return [];
   return [
     new Paragraph({ spacing: { before: 80 }, children: [new TextRun({ text: 'App context', bold: true, size: 18, color: MUTED })] }),
-    ...rows.map(([label, value]) => new Paragraph({ children: [new TextRun({ text: `${label}: `, bold: true, size: 18, color: MUTED }), new TextRun({ text: value || '-', size: 18, color: INK })] }))
+    ...rows.map(({ label, value }) => new Paragraph({ children: [new TextRun({ text: `${label}: `, bold: true, size: 18, color: MUTED }), new TextRun({ text: value, size: 18, color: INK })] }))
   ];
 }
