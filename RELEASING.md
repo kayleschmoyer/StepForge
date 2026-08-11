@@ -59,6 +59,13 @@ generated file from `release/`.
 
 ## Notes and limitations
 
+- **`npmRebuild` is off, on purpose.** Both native dependencies ship prebuilt
+  binaries — `uiohook-napi` as a Node-API prebuild (ABI-stable across Node and
+  Electron, so it never needs recompiling) and `sharp` as per-platform
+  `@img/sharp-*` packages. Letting electron-builder run `@electron/rebuild`
+  anyway means compiling `uiohook-napi` from source, which needs a Visual Studio
+  C++ toolchain that the GitHub runner does not have and that node-gyp 9 cannot
+  locate on current Windows images. Turning it back on breaks the release build.
 - **The packaged launch smoke test is not in CI.** `npm run verify:release`
   launches the packaged app and screenshots it; that is worth running locally
   before a risky release, but it is too fragile to gate automatic publishing.
