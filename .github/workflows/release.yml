@@ -1,0 +1,109 @@
+name: Release
+
+# Every merge to main ships a new patch release: build the NSIS installer,
+# publish it to GitHub Releases alongside latest.yml and the blockmap, and let
+# electron-updater pick it up on the next poll in every installed copy.
+#
+# To land a change without shipping it, put [skip release] in the merge commit
+# message. Doc-only and workflow-only changes never trigger a release.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '.github/**'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump to apply
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+# Releases mutate main and the tag list, so never run two at once.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the existing release tags are available below.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve next version
+        id: version
+        shell: bash
+        env:
+          BUMP: ${{ inputs.bump || 'patch' }}
+        run: |
+          set -euo pipefail
+          current=$(node -p "require('./package.json').version")
+          # Releases have been cut by hand in the past, so the tag list can sit
+          # ahead of package.json. Bump from whichever is higher and the next
+          # version can never collide with a tag that already exists.
+          highest=$(git tag --list 'v*' | sed 's/^v//' | sort -V | tail -n 1)
+          base=$(printf '%s\n%s\n' "$current" "${highest:-0.0.0}" | sort -V | tail -n 1)
+          next=$(node -e '
+            const [major, minor, patch] = process.argv[1].split(".").map(Number);
+            const bump = process.argv[2];
+            const parts = bump === "major" ? [major + 1, 0, 0]
+              : bump === "minor" ? [major, minor + 1, 0]
+              : [major, minor, patch + 1];
+            console.log(parts.join("."));
+          ' "$base" "$BUMP")
+          npm version "$next" --no-git-tag-version --allow-same-version > /dev/null
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "Releasing v$next (package.json was $current, highest tag was ${highest:-none})"
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build and publish installer
+        env:
+          # electron-builder publishes to the GitHub provider configured in
+          # package.json; the default workflow token can create releases here.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release
+
+      - name: Commit version bump
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json
+          git commit -m "Release v${{ steps.version.outputs.version }} [skip release]"
+          # A merge may have landed while the installer was building.
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Verify published updater metadata
+        run: npm run verify:updater -- -RequirePublished
+
+      - name: Upload installer artifact
+        if: ${{ always() && steps.version.outputs.version != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: StepForge-Setup-${{ steps.version.outputs.version }}
+          path: |
+            release/*.exe
+            release/latest.yml
+          if-no-files-found: warn
+          retention-days: 14
