@@ -13,6 +13,7 @@ import {
 import type { ComponentType, ReactNode } from 'react';
 import { useProjectStore } from '@renderer/state/projectStore';
 import type { RecordedStep, StepFlag } from '@shared/models/Step';
+import { appContextSuppressionLabel, summarizeAppContext } from '@shared/util/appContext';
 
 const ACCENT = 'var(--ksr-acc)';
 
@@ -81,6 +82,7 @@ function ContextSection({ step }: { step: RecordedStep }) {
     ['Process', context.processName],
     ['Confidence', context.confidence]
   ].filter(([, value]) => Boolean(value));
+  const { suppression } = summarizeAppContext(context);
 
   return (
     <InsSection label="App Context">
@@ -110,6 +112,22 @@ function ContextSection({ step }: { step: RecordedStep }) {
           </div>
         ))}
       </div>
+      {suppression && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: '7px 9px',
+            borderRadius: 7,
+            background: 'var(--ksr-surf-1)',
+            border: '1px solid var(--ksr-border-0)',
+            color: 'var(--ksr-text-3)',
+            fontSize: 10.5,
+            lineHeight: 1.4
+          }}
+        >
+          {appContextSuppressionLabel(suppression)}
+        </div>
+      )}
     </InsSection>
   );
 }

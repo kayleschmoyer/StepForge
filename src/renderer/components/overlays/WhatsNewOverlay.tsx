@@ -30,8 +30,8 @@ const RELEASE_NOTES: Record<string, { headline: string; intro: string; notes: Re
       },
       {
         title: 'Context in reports',
-        description: 'HTML, PDF, Markdown, and DOCX exports now show detected app/page context for each step.',
-        detail: 'The exported report can show App, Page, URL, and Host under each step, making handoffs much easier to understand.',
+        description: 'HTML, PDF, Markdown, and DOCX exports can show detected app/page context for each step.',
+        detail: 'Tick App context in the export drawer to print App, Page, URL, and Host under each step. StepForge skips the block when it would only repeat the window title or when the recording ran through a remote-session client.',
         demo: 'reports',
         Icon: AppWindow
       },

@@ -44,6 +44,7 @@ export function ExportDrawer() {
     screenshots: true,
     timestamps: true,
     notes: true,
+    appContext: false,
     branding: true,
     embed: true
   });
@@ -160,6 +161,7 @@ export function ExportDrawer() {
     includeScreenshots: opts.screenshots,
     includeTimestamps: opts.timestamps,
     includeNotes: opts.notes,
+    includeAppContext: opts.appContext,
     includeCompanyBranding: opts.branding,
     embedImagesAsBase64: opts.embed
   });
@@ -322,6 +324,7 @@ export function ExportDrawer() {
               <CheckRow label="Screenshots" on={opts.screenshots} onToggle={() => toggle('screenshots')} />
               <CheckRow label="Timestamps" on={opts.timestamps} onToggle={() => toggle('timestamps')} />
               <CheckRow label="Notes" on={opts.notes} onToggle={() => toggle('notes')} />
+              <CheckRow label="App context" on={opts.appContext} onToggle={() => toggle('appContext')} />
               <CheckRow
                 label="Company branding"
                 on={opts.branding}
