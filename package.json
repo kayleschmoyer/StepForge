@@ -51,6 +51,7 @@
     "appId": "com.kayleschmoyer.stepforge",
     "productName": "StepForge",
     "artifactName": "${productName}-Setup-${version}.${ext}",
+    "npmRebuild": false,
     "directories": {
       "output": "release",
       "buildResources": "resources"
